@@ -1,0 +1,168 @@
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Patrick+Hand&display=swap');
+@import 'tailwindcss';
+
+:root {
+	--paper: #fff8ea;
+	--ink: #3a332c;
+	--coral: #ff6b5b;
+	--yellow: #ffc83d;
+	--sky: #52bfee;
+	--grass: #7bc95e;
+	--grape: #b083e8;
+	--pink: #f490b8;
+
+	color-scheme: light;
+	font-family: 'Patrick Hand', cursive;
+	background: var(--paper);
+	background-image: radial-gradient(circle at 1px 1px, rgba(58, 51, 44, 0.07) 1px, transparent 0);
+	background-size: 22px 22px;
+	color: var(--ink);
+	padding: 24px 16px 60px;
+}
+
+.dark {
+	--paper: #fbefd4;
+	--coral: #c8462f;
+	--yellow: #c98a0b;
+	--sky: #1c7fae;
+	--grass: #3e8a22;
+	--grape: #6e3fb8;
+	--pink: #c24a7f;
+}
+
+@theme inline {
+	--color-paper: var(--paper);
+	--color-ink: var(--ink);
+	--color-coral: var(--coral);
+	--color-yellow: var(--yellow);
+	--color-sky: var(--sky);
+	--color-grass: var(--grass);
+	--color-grape: var(--grape);
+	--color-pink: var(--pink);
+
+	--font-title: 'Baloo 2', cursive;
+}
+
+h1,
+h2,
+h3 {
+	font-weight: bold;
+	font-family: 'Baloo 2', cursive;
+}
+
+@layer components {
+	.frame {
+		position: relative;
+		background: #fff;
+		border: 5px solid var(--ink);
+		border-radius: 18px;
+		padding: 18px 22px 22px;
+		box-shadow: 7px 7px 0 var(--ink);
+		background-image: linear-gradient(180deg, #fffef9, #fff);
+		width: 100%;
+	}
+
+	.ink {
+		border: 4px solid var(--ink);
+		border-radius: 20px;
+		box-shadow: 5px 5px 0 var(--ink);
+	}
+
+	.ink-sm {
+		border: 3px solid var(--ink);
+		border-radius: 15px;
+		box-shadow: 2px 2px 0 var(--ink);
+	}
+
+	.btn {
+		font-family: 'Baloo 2', cursive;
+		font-weight: 700;
+		font-size: 16px;
+		color: var(--ink);
+		border: 3px solid var(--ink);
+		border-radius: 16px;
+		padding: 11px 22px;
+		cursor: pointer;
+		box-shadow: 3px 3px 0 var(--ink);
+		transition:
+			transform 0.1s ease,
+			box-shadow 0.1s ease;
+		background: var(--yellow);
+	}
+	.btn:hover {
+		transform: translate(-1px, -2px) rotate(-1deg);
+	}
+	.btn:active {
+		transform: translate(2px, 2px) scale(0.97);
+		box-shadow: 1px 1px 0 var(--ink);
+	}
+	.btn.coral {
+		background: var(--coral);
+		color: #3a1208;
+	}
+	.btn.sky {
+		background: var(--sky);
+	}
+	.btn.grass {
+		background: var(--grass);
+	}
+	.btn.grape {
+		background: var(--grape);
+		color: #fff;
+	}
+	.btn.ghost {
+		background: #fff;
+	}
+	.btn:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+}
+
+@layer utilities {
+	.squiggle-underline {
+		display: inline-block;
+		position: relative;
+	}
+	.squiggle-underline svg {
+		display: block;
+		width: 100%;
+		height: 10px;
+		margin-top: -2px;
+	}
+
+	.blob1 {
+		border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%;
+	}
+	.blob2 {
+		border-radius: 45% 55% 50% 50% / 55% 45% 55% 45%;
+	}
+	.blob3 {
+		border-radius: 50% 50% 45% 55% / 45% 50% 55% 50%;
+	}
+}
+
+input[type='text'] {
+	width: 100%;
+	font-family: 'Patrick Hand', cursive;
+	font-size: 18px;
+	border: 3px solid var(--ink);
+	border-radius: 12px;
+	padding: 8px 12px;
+	text-align: center;
+	background: #fffef9;
+}
+
+label {
+	font-family: 'Baloo 2', cursive;
+	font-weight: 700;
+	font-size: 13px;
+	text-align: center;
+	margin: 10px 0 6px;
+}
+
+img,
+canvas {
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+}
