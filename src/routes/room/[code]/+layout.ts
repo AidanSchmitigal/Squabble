@@ -10,7 +10,5 @@ export function load({ params }) {
 		redirect(302, '/');
 	}
 
-	return {
-		roomCode
-	};
+	return { roomCode };
 }

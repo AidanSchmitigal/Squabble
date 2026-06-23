@@ -1,221 +1,144 @@
-import { shuffleArray } from '$lib';
+export type Avatar = (string | null)[];
 
-export type Phase = 'lobby' | 'study' | 'draw' | 'reveal' | 'scores' | 'finished';
+export type TileResult = 'absent' | 'present' | 'correct';
 
-export type Vote = {
-	voterId: string;
-	rankings: string[];
+export type GameMode = 'Blitz' | 'Royale';
+export type WordList = 'common' | 'expanded' | 'spicy';
+export type GamePhase = 'lobby' | 'playing' | 'finished';
+
+export type GameSettings = {
+	mode: GameMode;
+	wordLen: number;
+	wordList: WordList;
+	dmgTick: number;
+	maxPlayers: number;
+	private: boolean;
 };
 
-export type PlayerPoints = {
-	playerId: string;
-	points: number;
-};
-
-export type Angles = 'Red' | 'Green' | 'Blue' | 'Yellow' | 'Cyan' | 'Magenta';
-
-export type Avatar = {
-	drawing: string;
-};
-
-export type Player = {
+export type SquabblePlayer = {
 	id: string;
 	name: string;
 	avatar: Avatar;
-	score: number;
+	isHost: boolean;
 	connected: boolean;
-	joinedAt: number;
-	drawing?: string;
-	done?: boolean;
-};
-
-export type Challenge = {
-	id: string;
-	name: string;
-	prompt: string;
-	targetAngle: Angles;
-	model: string;
-	rotation: [number, number, number];
-};
-
-export type GameSettings = {
-	showGrid: boolean;
-	randomRotations: boolean;
+	hp: number;
+	eliminated: boolean;
+	placement: number | null;
+	wordIndex: number;
+	wordsSolved: number;
+	guesses: string[];
+	keyStates: Record<string, TileResult>;
+	miniGrid: boolean[];
 };
 
 export type GameState = {
 	roomCode: string;
-	phase: Phase;
-	round: number;
-	presenterId: string | null;
-	challenge: Challenge;
-	players: Player[];
-	votes: Vote[];
-	updatedAt: number;
-	phaseStartedAt: number;
+	phase: GamePhase;
 	settings: GameSettings;
+	players: SquabblePlayer[];
+	words: string[];
+	aliveCount: number;
+	winnerId: string | null;
 };
 
 export type ClientMessage =
 	| { type: 'join'; name: string; avatar: Avatar }
 	| { type: 'set-player'; name?: string; avatar?: Avatar }
-	| { type: 'phase'; phase: Phase }
-	| { type: 'next-round' }
-	| { type: 'drawing'; dataUrl: string }
-	| { type: 'clear-drawing' }
-	| { type: 'done'; done: boolean }
-	| { type: 'submit-vote'; rankings: string[] }
-	| { type: 'score'; playerId: string; delta: number }
-	| { type: 'reset' }
+	| { type: 'start-game' }
+	| { type: 'submit-guess'; guess: string }
 	| { type: 'update-settings'; settings: Partial<GameSettings> };
 
-export type ServerMessage = { type: 'state'; state: GameState } | { type: 'hello'; id: string };
+export type ServerMessage =
+	| { type: 'hello'; id: string }
+	| { type: 'state'; state: GameState }
+	| { type: 'error'; message: string };
 
-export const STUDY_DURATION = 10;
-export const DRAW_DURATION = 60;
-export const VOTING_DURATION = 30;
-export const ROUND_COUNT = 5;
-export const POINTS_PER_RANK = [3, 2, 1];
-
-const models: { name: string; validAngles: Angles[] }[] = [
-	{ name: '01', validAngles: ['Red', 'Blue', 'Yellow', 'Cyan'] },
-	// { name: '02', validAngles: [] }, Remove
-	{ name: '03', validAngles: ['Red', 'Green', 'Magenta'] },
-	{ name: '04', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '05', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '06', validAngles: ['Red', 'Green', 'Blue', 'Magenta'] },
-	{ name: '07', validAngles: ['Red', 'Blue', 'Yellow', 'Cyan'] },
-	{ name: '08', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '09', validAngles: ['Green', 'Yellow', 'Magenta'] },
-	{ name: '10', validAngles: ['Red', 'Blue', 'Yellow'] },
-	{ name: '11', validAngles: ['Red', 'Blue', 'Yellow'] },
-	{ name: '12', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '13', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '14', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '15', validAngles: ['Red', 'Green', 'Blue', 'Yellow'] },
-	{ name: '16', validAngles: ['Blue', 'Yellow', 'Magenta'] },
-	{ name: '17', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	// { name: '18', validAngles: [] }, Remove
-	// { name: '19', validAngles: [] }, Remove
-	// { name: '20', validAngles: [] }, Remove
-	{ name: '21', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '22', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '23', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '24', validAngles: ['Red', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '25', validAngles: ['Red', 'Blue', 'Yellow'] },
-	{ name: '26', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '27', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '28', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '29', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '30', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '31', validAngles: ['Red', 'Blue', 'Yellow', 'Cyan'] },
-	{ name: '32', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '33', validAngles: ['Blue', 'Yellow'] },
-	{ name: '34', validAngles: ['Blue', 'Yellow'] },
-	{ name: '35', validAngles: ['Red', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '36', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '37', validAngles: ['Red', 'Blue', 'Yellow', 'Magenta'] },
-	{ name: '38', validAngles: ['Red', 'Green', 'Blue', 'Cyan', 'Magenta'] },
-	{ name: '39', validAngles: ['Blue', 'Yellow'] },
-	{ name: '40', validAngles: ['Blue', 'Yellow'] },
-	{ name: '41', validAngles: ['Red', 'Blue', 'Yellow'] },
-	{ name: '42', validAngles: ['Red', 'Green', 'Cyan', 'Magenta'] },
-	{ name: '43', validAngles: ['Red', 'Green', 'Cyan', 'Magenta'] },
-	{ name: '44', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '45', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '46', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '47', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '48', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '49', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '50', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '51', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '52', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '53', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '54', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '55', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '56', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '57', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '58', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '59', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '60', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '61', validAngles: ['Red', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '62', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '63', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '64', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '65', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '66', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '67', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '68', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '69', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '70', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '71', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '72', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '73', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '74', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '75', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '76', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '77', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '78', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '79', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '80', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '81', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] },
-	{ name: '82', validAngles: ['Red', 'Green', 'Blue', 'Yellow', 'Cyan', 'Magenta'] }
-];
-
-export const challenges: Challenge[] = shuffleArray(
-	models.map((model) => ({
-		id: `model-${model.name}`,
-		name: `Shape ${model.name}`,
-		prompt: 'Study the 3D shape from every angle.',
-		targetAngle: model.validAngles[Math.floor(Math.random() * model.validAngles.length)],
-		model: `/models/${model.name}.glb`,
-		rotation: [
-			Math.random() * Math.PI * 2,
-			Math.random() * Math.PI * 2,
-			Math.random() * Math.PI * 2
-		] as [number, number, number]
-	}))
-).slice(0, ROUND_COUNT);
-
-export function makeRoomCode() {
+export function makeRoomCode(): string {
 	const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 	let code = '';
-	for (let index = 0; index < 4; index += 1) {
+	for (let i = 0; i < 4; i++) {
 		code += alphabet[Math.floor(Math.random() * alphabet.length)];
 	}
 	return code;
 }
 
-export function makeAvatar() {
-	return { drawing: '' } satisfies Avatar;
+export function makeAvatar(size = 10): Avatar {
+	return new Array(size * size).fill(null);
 }
 
-const defaultNames = ['Squiggle', 'Doodle', 'Wobble', 'Noodle', 'Zigzag', 'Pebble'];
+export function randomAvatar(size = 10): Avatar {
+	const palette = ['#ffffff', '#e5484d', '#5ab552', '#d7b740', '#8235f5', '#3a86ff', '#f2a65a', '#5e5e64'];
+	return new Array(size * size).fill(null).map(() =>
+		Math.random() < 0.5 ? palette[Math.floor(Math.random() * palette.length)] : null
+	);
+}
 
-export function sanitizeName(name: string) {
+export function sanitizeName(name: string): string {
+	const defaults = ['Pixel', 'Nova', 'Ziggy', 'Quokka', 'Mochi', 'Sable', 'Tango', 'Wisp'];
 	const clean = name.trim().replace(/\s+/g, ' ').slice(0, 18);
-	return clean || defaultNames[Math.floor(Math.random() * defaultNames.length)];
+	return clean || defaults[Math.floor(Math.random() * defaults.length)];
 }
 
-export function getTimeRemaining(phase: Phase, startedAt: number, now?: number) {
-	now ??= Date.now();
-	let duration = 0;
-	switch (phase) {
-		case 'study':
-			duration = STUDY_DURATION;
-			break;
-		case 'draw':
-			duration = DRAW_DURATION;
-			break;
-		case 'reveal':
-			duration = VOTING_DURATION;
-			break;
-		default:
-			break;
+export const BOT_NAMES = ['Pixel', 'Nova', 'Ziggy', 'Quokka', 'Mochi', 'Sable', 'Tango', 'Wisp', 'Juno', 'Remy', 'Echo', 'Birdie', 'Otter', 'Finch', 'Koda', 'Vex'];
+
+export const ANSWERS_5 = [
+	'CRANE', 'SLATE', 'BRISK', 'PLUME', 'GROVE', 'FLINT', 'QUART', 'WHISK', 'CHORD', 'GLAZE',
+	'PRISM', 'VIVID', 'MIRTH', 'SNOUT', 'BLAZE', 'TRYST', 'GUMBO', 'OXIDE', 'NYMPH', 'QUILT'
+];
+
+export const ALLOWED_5 = new Set([
+	...ANSWERS_5,
+	'ABOUT', 'OTHER', 'WHICH', 'THEIR', 'WOULD', 'THESE', 'CLICK', 'BOARD', 'LEARN', 'SOUND',
+	'GREAT', 'FIGHT', 'LIGHT', 'MIGHT', 'RIGHT', 'TIGHT', 'SIGHT', 'NIGHT', 'WORLD', 'HOUSE',
+	'MOUSE', 'TRACE', 'PLACE', 'SPACE', 'GRACE', 'BRAVE', 'CRAVE', 'STONE', 'SHINE', 'SHADE',
+	'TRADE', 'GRADE', 'ADIEU', 'AUDIO', 'CANOE', 'CHASE', 'DANCE', 'DOUBT', 'DREAM', 'DRINK',
+	'DRIVE', 'EARTH', 'ENJOY', 'EVERY', 'FAINT', 'FEAST', 'FLAME', 'FLOAT', 'FLUTE', 'FROST',
+	'GHOST', 'GLARE', 'GLEAM', 'GLOOM', 'HAPPY', 'HEART', 'HUMOR', 'JUICE', 'KNIFE', 'LARGE',
+	'LAUGH', 'LEMON', 'LOVELY', 'MAGIC', 'MANGO', 'MERCY', 'MIMIC', 'MONEY', 'MOUTH', 'MUSIC',
+	'NEVER', 'OCEAN', 'OFFER', 'OLIVE', 'PEACE', 'PEARL', 'PENNY', 'PILOT', 'PIXEL', 'POWER',
+	'QUEEN', 'QUERY', 'QUEST', 'QUOTA', 'RAISE', 'RANCH', 'RHYME', 'ROBOT', 'ROCKY', 'ROUGE',
+	'ROUND', 'SALAD', 'SALSA', 'SCALE', 'SCARE', 'SCENE', 'SCOPE', 'SCORE', 'SNAKE', 'SOLAR',
+	'SPARK', 'SPICE', 'SPINE', 'SPLIT', 'SPRAY', 'SQUAD', 'STACK', 'STAFF', 'STAGE', 'STAIN',
+	'STALE', 'STALL', 'STARK', 'STEAM', 'STICK', 'STILL', 'STOCK', 'STONE', 'STORM', 'STORY',
+	'STRIP', 'STUCK', 'STUDY', 'STUFF', 'STYLE', 'SUGAR', 'SUITE', 'SUNNY', 'SUPER', 'SURGE',
+	'SWAMP', 'SWEET', 'SWIFT', 'SWING', 'TABLE', 'TASTE', 'TEACH', 'TENOR', 'THEME', 'THICK',
+	'THIEF', 'THING', 'THINK', 'THORN', 'TIDAL', 'TIGER', 'TODAY', 'TOWER', 'TRAIN', 'TRASH',
+	'TREAT', 'TREND', 'TRIAL', 'TRIBE', 'TRICK', 'TROOP', 'TRUCK', 'TRULY', 'TRUST', 'TRUTH',
+	'TWEED', 'TWICE', 'TWIST', 'ULCER', 'UNCLE', 'UNDER', 'UNION', 'UNITE', 'UNITY', 'UNTIE',
+	'USAGE', 'USHER', 'USUAL', 'UTTER', 'VALID', 'VALUE', 'VAPOR', 'VAULT', 'VENUS', 'VERSE',
+	'VIDEO', 'VIGOR', 'VINYL', 'VIOLA', 'VIPER', 'VIRAL', 'VISIT', 'VISTA', 'VITAL', 'VIVID',
+	'VOCAL', 'VODKA', 'VOICE', 'VOWEL', 'WASTE', 'WATCH', 'WATER', 'WEARY', 'WEAVE', 'WEDGE',
+	'WEIGH', 'WEIRD', 'WHEAT', 'WHEEL', 'WHISK', 'WHITE', 'WHOLE', 'WIDEN', 'WIDTH', 'WITCH',
+	'WOMAN', 'WORLD', 'WORRY', 'WORSE', 'WORST', 'WORTH', 'WOULD', 'WOUND', 'WRATH', 'WRITE',
+	'WRONG', 'WROTE', 'YACHT', 'YEARN', 'YOUTH', 'ZEBRA', 'ZESTY', 'ZONED'
+]);
+
+export function evaluateGuess(guess: string, answer: string): TileResult[] {
+	const res: TileResult[] = new Array(guess.length).fill('absent');
+	const aLetters = answer.split('');
+	const used = new Array(answer.length).fill(false);
+	for (let i = 0; i < guess.length; i++) {
+		if (guess[i] === answer[i]) {
+			res[i] = 'correct';
+			used[i] = true;
+		}
 	}
-	const remaining = Math.max(0, duration * 1000 - (now - startedAt));
-	const totalSeconds = Math.ceil(remaining / 1000);
-	const m = Math.floor(totalSeconds / 60);
-	const s = totalSeconds % 60;
-	return `${m}:${s.toString().padStart(2, '0')}`;
+	for (let i = 0; i < guess.length; i++) {
+		if (res[i] === 'correct') continue;
+		const idx = aLetters.findIndex((c, j) => c === guess[i] && !used[j]);
+		if (idx !== -1) {
+			res[i] = 'present';
+			used[idx] = true;
+		}
+	}
+	return res;
 }
+
+export const DEFAULT_SETTINGS: GameSettings = {
+	mode: 'Blitz',
+	wordLen: 5,
+	wordList: 'common',
+	dmgTick: 1,
+	maxPlayers: 99,
+	private: false
+};

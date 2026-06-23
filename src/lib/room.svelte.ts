@@ -1,4 +1,4 @@
-import { type ClientMessage, type GameState, type ServerMessage } from './game';
+import type { ClientMessage, GameState, ServerMessage } from './game';
 
 class RoomState {
 	connected = $state(false);
@@ -12,7 +12,6 @@ class RoomState {
 	#manualClose = false;
 
 	get gameState(): GameState {
-		console.assert(this._gameState && this.connected, 'Game state not available');
 		return this._gameState!;
 	}
 
@@ -30,12 +29,24 @@ class RoomState {
 		this.#open();
 	}
 
+	disconnect() {
+		this.#manualClose = true;
+		this.#socket?.close();
+		this.#socket = null;
+		this.connected = false;
+		this._gameState = null;
+		if (this.#reconnectTimer) {
+			clearTimeout(this.#reconnectTimer);
+			this.#reconnectTimer = null;
+		}
+	}
+
 	#open() {
 		this.connected = false;
 		this.selfId = '';
 		this._gameState = null;
 
-		const ws = new WebSocket(getWsUrl(this.#code));
+		const ws = new WebSocket(this.#wsUrl());
 		this.#socket = ws;
 		ws.addEventListener('open', () => {
 			this.connected = true;
@@ -55,16 +66,16 @@ class RoomState {
 		});
 	}
 
+	#wsUrl() {
+		const protocol = import.meta.env.DEV ? 'ws' : 'wss';
+		return `${protocol}://${window.location.host}/ws?room=${this.#code}`;
+	}
+
 	send(message: ClientMessage) {
 		if (this.#socket?.readyState === WebSocket.OPEN) {
 			this.#socket.send(JSON.stringify(message));
 		}
 	}
-}
-
-function getWsUrl(code: string) {
-	const protocol = import.meta.env.DEV ? 'ws' : 'wss';
-	return `${protocol}://${window.location.host}/ws?room=${code}`;
 }
 
 export const roomState = new RoomState();

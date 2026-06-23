@@ -1,12 +1,15 @@
 <script lang="ts">
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
 
 	let { children } = $props();
 </script>
 
-<svelte:head><link rel="icon" href={favicon} /></svelte:head>
-
-<main class="flex flex-col items-center">
+<div id="bgTiles"></div>
+<div id="toastWrap"></div>
+<div id="app">
 	{@render children()}
-</main>
+</div>
+<div class="top-credit">
+	Squabble &mdash; competitive Wordle &middot; original game by
+	<a href="https://twitter.com/Ottomated_" target="_blank">Ottomated</a>
+</div>
