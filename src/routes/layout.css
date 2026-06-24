@@ -18,9 +18,6 @@
 	--yellow-deep: #a8901f;
 	--yellow-glow: rgba(215, 183, 64, 0.45);
 	--gray-tile: #4b4b50;
-	--purple: #8235f5;
-	--purple-deep: #5d1ed1;
-	--purple-glow: rgba(130, 53, 245, 0.5);
 	--red: #e5484d;
 	--red-deep: #a82a2e;
 	--font-display: 'Archivo Black', 'Inter', sans-serif;
@@ -62,8 +59,6 @@ body.reduced-motion * {
 	--color-yellow: var(--yellow);
 	--color-yellow-deep: var(--yellow-deep);
 	--color-gray-tile: var(--gray-tile);
-	--color-purple: var(--purple);
-	--color-purple-deep: var(--purple-deep);
 	--color-red: var(--red);
 	--color-red-deep: var(--red-deep);
 	--font-display: 'Archivo Black', 'Inter', sans-serif;
@@ -71,6 +66,11 @@ body.reduced-motion * {
 	--font-mono: 'JetBrains Mono', monospace;
 	--radius: 14px;
 	--radius-sm: 8px;
+	--animate-fadeup: fadeUp 0.6s ease forwards;
+}
+
+@utility animation-delay-* {
+	animation-delay: calc(--value(integer, [integer]) * 1ms);
 }
 
 * {
@@ -81,6 +81,7 @@ html,
 body {
 	margin: 0;
 	padding: 0;
+	overflow: hidden;
 }
 
 body {
@@ -91,21 +92,13 @@ body {
 	overflow-x: hidden;
 }
 
-button {
-	font-family: inherit;
-	cursor: pointer;
-	border: none;
-	background: none;
-	color: inherit;
-}
-
 input,
 select {
 	font-family: inherit;
 }
 
 ::selection {
-	background: var(--purple);
+	background: var(--yellow);
 	color: #fff;
 }
 
@@ -123,7 +116,7 @@ select {
 }
 
 a {
-	color: var(--purple);
+	color: var(--yellow);
 	text-decoration: none;
 }
 
@@ -136,8 +129,7 @@ a {
 	pointer-events: none;
 	background:
 		radial-gradient(circle at 20% 10%, rgba(130, 53, 245, 0.1), transparent 45%),
-		radial-gradient(circle at 85% 80%, rgba(90, 181, 82, 0.08), transparent 45%),
-		var(--bg);
+		radial-gradient(circle at 85% 80%, rgba(90, 181, 82, 0.08), transparent 45%), var(--bg);
 }
 
 .falling-tile {
@@ -173,16 +165,12 @@ a {
 }
 
 .screen {
-	display: none;
+	display: flex;
 	min-height: 100vh;
 	flex-direction: column;
 	align-items: center;
 	padding: 28px 20px 60px;
 	animation: screenIn 0.45s ease;
-}
-
-.screen.active {
-	display: flex;
 }
 
 @keyframes screenIn {
@@ -212,54 +200,10 @@ a {
 }
 
 .top-credit a:hover {
-	color: var(--purple);
+	color: var(--yellow);
 }
 
 /* ---------- Hero / Logo ---------- */
-.hero {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 10px;
-	margin-bottom: 18px;
-}
-
-.logo-row {
-	display: flex;
-	gap: 8px;
-}
-
-.logo-tile {
-	width: 54px;
-	height: 54px;
-	border-radius: 8px;
-	border: 2px solid var(--border);
-	background: var(--surface);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-family: var(--font-display);
-	font-size: 26px;
-	color: var(--ink);
-	transform: rotateX(90deg);
-	animation: tileFlipIn 0.5s ease forwards;
-	animation-delay: calc(var(--i) * 90ms);
-	position: relative;
-}
-
-@keyframes tileFlipIn {
-	0% {
-		transform: rotateX(90deg);
-	}
-	60% {
-		transform: rotateX(-12deg);
-	}
-	100% {
-		transform: rotateX(0deg);
-		border-color: var(--accent-color, var(--border));
-		background: var(--accent-bg, var(--surface));
-	}
-}
 
 .tag {
 	font-family: var(--font-mono);
@@ -312,14 +256,20 @@ a {
 	justify-content: center;
 	gap: 8px;
 	transition:
-		transform 0.12s ease,
+		transform 0.6s ease,
 		box-shadow 0.12s ease,
 		filter 0.12s ease;
 	border: 2px solid transparent;
+	--btn-scale: 1;
+	--btn-translateY: 0;
+	--btn-rotateX: 360deg;
+	transform: scale(var(--btn-scale)) translateY(var(--btn-translateY)) rotateX(var(--btn-rotateX));
 }
 
 .btn:active {
-	transform: scale(0.96);
+	--btn-scale: 0.96;
+	--btn-rotateX: 0deg;
+	transition-duration: 0s;
 }
 
 .btn-primary {
@@ -330,18 +280,18 @@ a {
 
 .btn-primary:hover {
 	filter: brightness(1.08);
-	transform: translateY(-1px);
+	--btn-translateY: -1px;
 }
 
 .btn-purple {
-	background: var(--purple);
-	color: #fff;
-	box-shadow: 0 6px 0 var(--purple-deep);
+	background: var(--yellow);
+	color: #0e1a0d;
+	box-shadow: 0 6px 0 var(--yellow-deep);
 }
 
 .btn-purple:hover {
 	filter: brightness(1.08);
-	transform: translateY(-1px);
+	--btn-translateY: -1px;
 }
 
 .btn-ghost {
@@ -404,9 +354,6 @@ a {
 }
 
 /* ---------- Main screen ---------- */
-#screen-main {
-	justify-content: center;
-}
 
 .main-wrap {
 	width: 100%;
@@ -415,107 +362,6 @@ a {
 	flex-direction: column;
 	align-items: center;
 	gap: 22px;
-}
-
-.cta-row {
-	display: flex;
-	gap: 12px;
-	width: 100%;
-}
-
-.cta-row .btn {
-	flex: 1;
-	padding: 18px 14px;
-	flex-direction: column;
-	gap: 4px;
-	border-radius: var(--radius);
-}
-
-.cta-row .btn .label {
-	font-size: 15px;
-}
-
-.cta-row .btn .sub {
-	font-size: 11px;
-	font-weight: 500;
-	opacity: 0.75;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-}
-
-.join-box {
-	display: none;
-	width: 100%;
-	gap: 8px;
-}
-
-.join-box.show {
-	display: flex;
-}
-
-.join-box input {
-	flex: 1;
-	background: var(--surface-2);
-	border: 2px solid var(--border);
-	border-radius: var(--radius-sm);
-	color: var(--ink);
-	font-family: var(--font-mono);
-	font-size: 20px;
-	letter-spacing: 0.2em;
-	text-align: center;
-	text-transform: uppercase;
-	padding: 12px 8px;
-}
-
-.join-box input:focus {
-	outline: none;
-	border-color: var(--purple);
-}
-
-.profile-card {
-	width: 100%;
-}
-
-.profile-row {
-	display: flex;
-	align-items: center;
-	gap: 14px;
-}
-
-.name-input {
-	flex: 1;
-	background: var(--surface-2);
-	border: 2px solid var(--border);
-	border-radius: var(--radius-sm);
-	color: var(--ink);
-	font-size: 15px;
-	font-weight: 600;
-	padding: 11px 12px;
-}
-
-.name-input:focus {
-	outline: none;
-	border-color: var(--purple);
-}
-
-.prefs-row {
-	display: flex;
-	gap: 10px;
-	margin-top: 14px;
-	flex-wrap: wrap;
-}
-
-.pref-toggle {
-	display: flex;
-	align-items: center;
-	gap: 8px;
-	background: var(--surface-2);
-	border: 1px solid var(--border);
-	border-radius: 20px;
-	padding: 8px 12px;
-	font-size: 12.5px;
-	color: var(--ink-dim);
-	font-weight: 600;
 }
 
 .switch {
@@ -544,13 +390,13 @@ a {
 }
 
 .switch.on {
-	background: var(--purple-glow);
-	border-color: var(--purple);
+	background: var(--yellow-glow);
+	border-color: var(--yellow);
 }
 
 .switch.on::after {
 	transform: translateX(15px);
-	background: var(--purple);
+	background: var(--yellow);
 }
 
 .section-label {
@@ -621,13 +467,13 @@ a {
 	border: 2px dashed var(--border);
 	border-radius: var(--radius-sm);
 	padding: 8px 18px;
-	color: var(--purple);
+	color: var(--yellow);
 	cursor: pointer;
 	transition: border-color 0.15s;
 }
 
 .code-display:hover {
-	border-color: var(--purple);
+	border-color: var(--yellow);
 }
 
 .qr-canvas {
@@ -735,7 +581,7 @@ a {
 	bottom: -6px;
 	left: 50%;
 	transform: translateX(-50%);
-	background: var(--purple);
+	background: var(--yellow);
 	color: #fff;
 	font-size: 9px;
 	font-weight: 700;
@@ -790,7 +636,7 @@ a {
 }
 
 .seg-control button.active {
-	background: var(--purple);
+	background: var(--yellow);
 	color: #fff;
 }
 
@@ -806,7 +652,7 @@ a {
 
 .range-pill {
 	width: 120px;
-	accent-color: var(--purple);
+	accent-color: var(--yellow);
 }
 
 /* ---------- Avatar editor ---------- */
@@ -911,14 +757,10 @@ a {
 	background: rgba(8, 8, 10, 0.7);
 	backdrop-filter: blur(3px);
 	z-index: 50;
-	display: none;
+	display: flex;
 	align-items: center;
 	justify-content: center;
 	padding: 20px;
-}
-
-.modal-overlay.show {
-	display: flex;
 	animation: fadeIn 0.2s ease;
 }
 
@@ -1049,9 +891,9 @@ a {
 	font-family: var(--font-mono);
 	font-size: 12px;
 	font-weight: 700;
-	background: var(--purple-glow);
+	background: var(--yellow-glow);
 	color: #fff;
-	border: 1px solid var(--purple);
+	border: 1px solid var(--yellow);
 	padding: 5px 10px;
 	border-radius: 8px;
 }
@@ -1357,7 +1199,7 @@ a {
 
 @keyframes miniFlash {
 	0% {
-		background: var(--purple);
+		background: var(--yellow);
 		transform: scale(1.6);
 	}
 	100% {
@@ -1478,7 +1320,7 @@ a {
 	font-family: var(--font-mono);
 	font-size: 22px;
 	font-weight: 700;
-	color: var(--purple);
+	color: var(--yellow);
 }
 
 .stat-box .lbl {
@@ -1554,9 +1396,7 @@ a {
 }
 
 .howto-step {
-	display: flex;
 	gap: 10px;
-	align-items: flex-start;
 	margin-bottom: 12px;
 	font-size: 13px;
 	color: var(--ink-dim);
@@ -1590,11 +1430,6 @@ a {
 @media (max-width: 480px) {
 	.cta-row {
 		flex-direction: column;
-	}
-	.logo-tile {
-		width: 38px;
-		height: 38px;
-		font-size: 18px;
 	}
 	.tile {
 		width: 40px;

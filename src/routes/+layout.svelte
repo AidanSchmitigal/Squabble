@@ -10,6 +10,6 @@
 	{@render children()}
 </div>
 <div class="top-credit">
-	Squabble &mdash; competitive Wordle &middot; original game by
-	<a href="https://twitter.com/Ottomated_" target="_blank">Ottomated</a>
+	Squabble &middot; competitive Wordle &middot;
+	<a href="https://squabble.me/" target="_blank">original game by Ottomated</a>
 </div>
