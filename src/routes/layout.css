@@ -120,43 +120,6 @@ a {
 	text-decoration: none;
 }
 
-/* ---------- Background falling tiles ---------- */
-#bgTiles {
-	position: fixed;
-	inset: 0;
-	z-index: 0;
-	overflow: hidden;
-	pointer-events: none;
-	background:
-		radial-gradient(circle at 20% 10%, rgba(130, 53, 245, 0.1), transparent 45%),
-		radial-gradient(circle at 85% 80%, rgba(90, 181, 82, 0.08), transparent 45%), var(--bg);
-}
-
-.falling-tile {
-	position: absolute;
-	top: -60px;
-	width: 34px;
-	height: 34px;
-	border-radius: 6px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-family: var(--font-display);
-	font-size: 16px;
-	color: rgba(255, 255, 255, 0.85);
-	opacity: 0.16;
-	animation: fallDown linear infinite;
-}
-
-@keyframes fallDown {
-	0% {
-		transform: translateY(-5vh) rotate(0deg);
-	}
-	100% {
-		transform: translateY(110vh) rotate(40deg);
-	}
-}
-
 /* ---------- App / screens ---------- */
 #app {
 	position: relative;
@@ -225,11 +188,6 @@ a {
 		opacity: 1;
 		transform: translateY(0);
 	}
-}
-
-.mini-logo {
-	display: flex;
-	gap: 4px;
 }
 
 .mini-logo .mt {

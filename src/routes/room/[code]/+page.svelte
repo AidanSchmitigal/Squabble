@@ -1,13 +1,28 @@
 <script lang="ts">
 	import { roomState } from '$lib/room.svelte';
-	import { evaluateGuess, ALLOWED_5, type SquabblePlayer, type TileResult, type Avatar, type GameSettings } from '$lib/game';
+	import {
+		evaluateGuess,
+		ALLOWED_5,
+		type SquabblePlayer,
+		type TileResult,
+		type Avatar,
+		type GameSettings
+	} from '$lib/game';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 
 	const PALETTE = [
-		'#ffffff', '#0e0e10', '#e5484d', '#5ab552',
-		'#d7b740', '#8235f5', '#3a86ff', '#f2a65a', '#a85bd6', '#5e5e64'
+		'#ffffff',
+		'#0e0e10',
+		'#e5484d',
+		'#5ab552',
+		'#d7b740',
+		'#8235f5',
+		'#3a86ff',
+		'#f2a65a',
+		'#a85bd6',
+		'#5e5e64'
 	];
 
 	let gameState = $derived(roomState.gameState);
@@ -49,7 +64,10 @@
 		ctx.fillRect(0, 0, node.width, node.height);
 		let seed = 0;
 		for (const ch of text) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
-		function rnd() { seed = (seed * 1103515245 + 12345) >>> 0; return (seed >>> 16) / 65535; }
+		function rnd() {
+			seed = (seed * 1103515245 + 12345) >>> 0;
+			return (seed >>> 16) / 65535;
+		}
 		ctx.fillStyle = '#111';
 		for (let y = 0; y < N; y++) {
 			for (let x = 0; x < N; x++) {
@@ -58,7 +76,11 @@
 				if (rnd() < 0.46) ctx.fillRect(x * 4, y * 4, 4, 4);
 			}
 		}
-		[[0, 0], [N - 7, 0], [0, N - 7]].forEach(([fx, fy]) => {
+		[
+			[0, 0],
+			[N - 7, 0],
+			[0, N - 7]
+		].forEach(([fx, fy]) => {
 			ctx.fillStyle = '#111';
 			ctx.fillRect(fx * 4, fy * 4, 28, 28);
 			ctx.fillStyle = '#fff';
@@ -106,7 +128,11 @@
 	});
 
 	function joinGame() {
-		roomState.send({ type: 'join', name: lobbyName || 'Player', avatar: myLobbyAvatar || new Array(100).fill(null) });
+		roomState.send({
+			type: 'join',
+			name: lobbyName || 'Player',
+			avatar: myLobbyAvatar || new Array(100).fill(null)
+		});
 	}
 
 	function handleStartGame() {
@@ -163,23 +189,40 @@
 		}
 
 		let painting = false;
-		canvas.addEventListener('mousedown', (e) => { painting = true; paintAt(e.clientX, e.clientY); });
-		window.addEventListener('mouseup', () => { painting = false; });
-		canvas.addEventListener('mousemove', (e) => { if (painting) paintAt(e.clientX, e.clientY); });
-		canvas.addEventListener('touchstart', (e) => {
+		canvas.addEventListener('mousedown', (e) => {
 			painting = true;
-			const t = e.touches[0];
-			paintAt(t.clientX, t.clientY);
-			e.preventDefault();
-		}, { passive: false });
-		canvas.addEventListener('touchmove', (e) => {
-			if (painting) {
+			paintAt(e.clientX, e.clientY);
+		});
+		window.addEventListener('mouseup', () => {
+			painting = false;
+		});
+		canvas.addEventListener('mousemove', (e) => {
+			if (painting) paintAt(e.clientX, e.clientY);
+		});
+		canvas.addEventListener(
+			'touchstart',
+			(e) => {
+				painting = true;
 				const t = e.touches[0];
 				paintAt(t.clientX, t.clientY);
-			}
-			e.preventDefault();
-		}, { passive: false });
-		canvas.addEventListener('touchend', () => { painting = false; });
+				e.preventDefault();
+			},
+			{ passive: false }
+		);
+		canvas.addEventListener(
+			'touchmove',
+			(e) => {
+				if (painting) {
+					const t = e.touches[0];
+					paintAt(t.clientX, t.clientY);
+				}
+				e.preventDefault();
+			},
+			{ passive: false }
+		);
+		canvas.addEventListener('touchend', () => {
+			painting = false;
+		});
 
 		paletteEl.innerHTML = '';
 		PALETTE.forEach((c) => {
@@ -206,17 +249,19 @@
 		paletteEl.appendChild(eraseSw);
 
 		const clearBtn = document.getElementById('lobbyClearAvatar');
-		if (clearBtn) clearBtn.onclick = () => {
-			current = new Array(GRID * GRID).fill(null);
-			render();
-		};
+		if (clearBtn)
+			clearBtn.onclick = () => {
+				current = new Array(GRID * GRID).fill(null);
+				render();
+			};
 		const randomBtn = document.getElementById('lobbyRandomAvatar');
-		if (randomBtn) randomBtn.onclick = () => {
-			current = current.map(() =>
-				Math.random() < 0.55 ? PALETTE[Math.floor(Math.random() * PALETTE.length)] : null
-			);
-			render();
-		};
+		if (randomBtn)
+			randomBtn.onclick = () => {
+				current = current.map(() =>
+					Math.random() < 0.55 ? PALETTE[Math.floor(Math.random() * PALETTE.length)] : null
+				);
+				render();
+			};
 	}
 
 	$effect(() => {
@@ -237,7 +282,10 @@
 	function updateSetting(key: keyof GameSettings, value: unknown) {
 		if (!localSettings) return;
 		localSettings = { ...localSettings, [key]: value };
-		roomState.send({ type: 'update-settings', settings: { [key]: value } as Partial<GameSettings> });
+		roomState.send({
+			type: 'update-settings',
+			settings: { [key]: value } as Partial<GameSettings>
+		});
 	}
 
 	/* ================================================================
@@ -268,12 +316,12 @@
 		if (!me || me.eliminated) return;
 		if (currentGuess.length < gameState.settings.wordLen) {
 			shakeRow = me.guesses.length;
-			setTimeout(() => shakeRow = null, 400);
+			setTimeout(() => (shakeRow = null), 400);
 			return;
 		}
 		if (!ALLOWED_5.has(currentGuess)) {
 			shakeRow = me.guesses.length;
-			setTimeout(() => shakeRow = null, 400);
+			setTimeout(() => (shakeRow = null), 400);
 			return;
 		}
 		roomState.send({ type: 'submit-guess', guess: currentGuess });
@@ -324,7 +372,9 @@
 		if (phase === 'finished') {
 			try {
 				history = JSON.parse(localStorage.getItem('squabble_history') || '[]');
-			} catch { history = []; }
+			} catch {
+				history = [];
+			}
 		}
 	});
 
@@ -348,7 +398,7 @@
 
 <!-- ============================== LOBBY ============================== -->
 {#if phase === 'lobby'}
-	<section class="screen active" id="screen-lobby">
+	<section class="screen" id="screen-lobby">
 		<div class="lobby-wrap">
 			<div class="lobby-top">
 				<div class="card code-card">
@@ -360,12 +410,13 @@
 							<span>{gameState.settings.mode}</span>
 						</div>
 					</div>
-					<canvas class="qr-canvas" id="qrCanvas" width="92" height="92" use:drawQR={'https://squabble.me/join/' + gameState.roomCode}></canvas>
-				</div>
-				<div class="mini-logo">
-					{#each 'SQUABBLE'.split('') as ch}
-						<div class="mt">{ch}</div>
-					{/each}
+					<canvas
+						class="qr-canvas"
+						id="qrCanvas"
+						width="92"
+						height="92"
+						use:drawQR={'https://squabble.me/join/' + gameState.roomCode}
+					></canvas>
 				</div>
 			</div>
 
@@ -386,18 +437,32 @@
 
 				{#if me?.isHost}
 					<div class="card">
-						<span class="section-label">Game settings <span style="color:var(--ink-faint);font-weight:500">(host only)</span></span>
+						<span class="section-label"
+							>Game settings <span style="color:var(--ink-faint);font-weight:500">(host only)</span
+							></span
+						>
 						<div class="settings-panel">
 							<div class="setting-row">
 								<label>Mode</label>
 								<div class="seg-control">
-									<button class:active={localSettings?.mode === 'Blitz'} onclick={() => updateSetting('mode', 'Blitz')}>Blitz</button>
-									<button class:active={localSettings?.mode === 'Royale'} onclick={() => updateSetting('mode', 'Royale')}>Royale</button>
+									<button
+										class:active={localSettings?.mode === 'Blitz'}
+										onclick={() => updateSetting('mode', 'Blitz')}>Blitz</button
+									>
+									<button
+										class:active={localSettings?.mode === 'Royale'}
+										onclick={() => updateSetting('mode', 'Royale')}>Royale</button
+									>
 								</div>
 							</div>
 							<div class="setting-row">
 								<label>Word length</label>
-								<select class="select-pill" value={localSettings?.wordLen ?? 5} onchange={(e) => updateSetting('wordLen', parseInt((e.target as HTMLSelectElement).value))}>
+								<select
+									class="select-pill"
+									value={localSettings?.wordLen ?? 5}
+									onchange={(e) =>
+										updateSetting('wordLen', parseInt((e.target as HTMLSelectElement).value))}
+								>
 									<option value="4">4 letters</option>
 									<option value="5">5 letters</option>
 									<option value="6">6 letters</option>
@@ -405,7 +470,11 @@
 							</div>
 							<div class="setting-row">
 								<label>Word list</label>
-								<select class="select-pill" value={localSettings?.wordList ?? 'common'} onchange={(e) => updateSetting('wordList', (e.target as HTMLSelectElement).value)}>
+								<select
+									class="select-pill"
+									value={localSettings?.wordList ?? 'common'}
+									onchange={(e) => updateSetting('wordList', (e.target as HTMLSelectElement).value)}
+								>
 									<option value="common">Common</option>
 									<option value="expanded">Expanded</option>
 									<option value="spicy">🌶️ Spicy / Obscure</option>
@@ -413,11 +482,24 @@
 							</div>
 							<div class="setting-row">
 								<label>Damage tick</label>
-								<input type="range" min="1" max="5" value={localSettings?.dmgTick ?? 1} class="range-pill" oninput={(e) => updateSetting('dmgTick', parseInt((e.target as HTMLInputElement).value))} />
+								<input
+									type="range"
+									min="1"
+									max="5"
+									value={localSettings?.dmgTick ?? 1}
+									class="range-pill"
+									oninput={(e) =>
+										updateSetting('dmgTick', parseInt((e.target as HTMLInputElement).value))}
+								/>
 							</div>
 							<div class="setting-row">
 								<label>Max players</label>
-								<select class="select-pill" value={localSettings?.maxPlayers ?? 99} onchange={(e) => updateSetting('maxPlayers', parseInt((e.target as HTMLSelectElement).value))}>
+								<select
+									class="select-pill"
+									value={localSettings?.maxPlayers ?? 99}
+									onchange={(e) =>
+										updateSetting('maxPlayers', parseInt((e.target as HTMLSelectElement).value))}
+								>
 									<option value="8">8</option>
 									<option value="20">20</option>
 									<option value="50">50</option>
@@ -426,12 +508,20 @@
 							</div>
 							<div class="setting-row">
 								<label>Private room</label>
-								<button class="pref-toggle" style="padding:6px 10px" onclick={() => updateSetting('private', !localSettings?.private)}>
+								<button
+									class="pref-toggle"
+									style="padding:6px 10px"
+									onclick={() => updateSetting('private', !localSettings?.private)}
+								>
 									<span class="switch" class:on={localSettings?.private ?? false}></span>
 								</button>
 							</div>
 						</div>
-						<button class="btn btn-primary btn-block" onclick={handleStartGame} style="margin-top:16px">Start Game ▶</button>
+						<button
+							class="btn btn-primary btn-block"
+							onclick={handleStartGame}
+							style="margin-top:16px">Start Game ▶</button
+						>
 					</div>
 				{/if}
 			</div>
@@ -444,7 +534,16 @@
 					<div class="avatar-tools">
 						<button class="btn btn-ghost btn-sm" id="lobbyClearAvatar">Clear</button>
 						<button class="btn btn-ghost btn-sm" id="lobbyRandomAvatar">🎲 Random</button>
-						<input type="text" class="name-input" id="lobbyNameInput" placeholder="Your name" maxlength="14" style="margin-top:4px" bind:value={lobbyName} oninput={() => joinGame()} />
+						<input
+							type="text"
+							class="name-input"
+							id="lobbyNameInput"
+							placeholder="Your name"
+							maxlength="14"
+							style="margin-top:4px"
+							bind:value={lobbyName}
+							oninput={() => joinGame()}
+						/>
 					</div>
 				</div>
 			</div>
@@ -453,9 +552,9 @@
 		</div>
 	</section>
 
-<!-- ============================== PLAYING ============================== -->
+	<!-- ============================== PLAYING ============================== -->
 {:else if phase === 'playing'}
-	<section class="screen active" id="screen-game">
+	<section class="screen" id="screen-game">
 		<div class="game-wrap">
 			<div class="game-topbar">
 				<div class="word-progress">
@@ -464,7 +563,10 @@
 				<div class="hp-wrap">
 					<span class="hp-label">HP</span>
 					<div class="hp-bar-track">
-						<div class="hp-bar-fill {hpClass(me?.hp ?? 100)}" style="width:{Math.max(0, me?.hp ?? 100)}%"></div>
+						<div
+							class="hp-bar-fill {hpClass(me?.hp ?? 100)}"
+							style="width:{Math.max(0, me?.hp ?? 100)}%"
+						></div>
 					</div>
 					<span class="hp-num">{Math.max(0, Math.round(me?.hp ?? 100))}</span>
 				</div>
@@ -478,9 +580,23 @@
 							<div class="board-row" class:shake={shakeRow === rowIdx}>
 								{#each Array(gameState.settings.wordLen) as _, colIdx}
 									{@const guess = me?.guesses[rowIdx]}
-									{@const letter = guess ? guess[colIdx] : (rowIdx === (me?.guesses.length ?? 0) ? currentGuess[colIdx] : '')}
-									{@const result = guess ? evaluateGuess(guess, gameState.words[me?.wordIndex ?? 0])[colIdx] : null}
-									<div class="tile" class:filled={!!letter} class:correct={result === 'correct'} class:present={result === 'present'} class:absent={result === 'absent'}>{letter}</div>
+									{@const letter = guess
+										? guess[colIdx]
+										: rowIdx === (me?.guesses.length ?? 0)
+											? currentGuess[colIdx]
+											: ''}
+									{@const result = guess
+										? evaluateGuess(guess, gameState.words[me?.wordIndex ?? 0])[colIdx]
+										: null}
+									<div
+										class="tile"
+										class:filled={!!letter}
+										class:correct={result === 'correct'}
+										class:present={result === 'present'}
+										class:absent={result === 'absent'}
+									>
+										{letter}
+									</div>
 								{/each}
 							</div>
 						{/each}
@@ -492,7 +608,13 @@
 								{#if ri === 2}<button class="key wide" onclick={submitGuess}>ENTER</button>{/if}
 								{#each row.split('') as ch}
 									{@const st = keyStates[ch]}
-									<button class="key" class:correct={st === 'correct'} class:present={st === 'present'} class:absent={st === 'absent'} onclick={() => typeLetter(ch)}>{ch}</button>
+									<button
+										class="key"
+										class:correct={st === 'correct'}
+										class:present={st === 'present'}
+										class:absent={st === 'absent'}
+										onclick={() => typeLetter(ch)}>{ch}</button
+									>
 								{/each}
 								{#if ri === 2}<button class="key wide" onclick={backspace}>⌫</button>{/if}
 							</div>
@@ -510,7 +632,9 @@
 									{p.name}
 									{#if p.eliminated}<span class="skull">💀</span>{/if}
 								</div>
-								<div class="opp-hp-track"><div class="opp-hp-fill {hpClass(hpPct)}" style="width:{hpPct}%"></div></div>
+								<div class="opp-hp-track">
+									<div class="opp-hp-fill {hpClass(hpPct)}" style="width:{hpPct}%"></div>
+								</div>
 								<div class="opp-mini-grid">
 									{#each Array(15) as _, i}
 										<div class="opp-mini-cell" class:fill={p.miniGrid[i]}></div>
@@ -524,23 +648,36 @@
 		</div>
 
 		<div class="eliminated-banner" class:show={showEliminated}>
-			<div style="font-family:var(--font-display);font-size:38px;color:var(--red)">💀 ELIMINATED</div>
-			<div style="color:var(--ink-dim);font-family:var(--font-mono)">Placed #{gameState.players.length - gameState.aliveCount + 1}/{gameState.players.length}</div>
-			<button class="btn btn-ghost" onclick={() => showEliminated = false}>Spectate the rest →</button>
+			<div style="font-family:var(--font-display);font-size:38px;color:var(--red)">
+				💀 ELIMINATED
+			</div>
+			<div style="color:var(--ink-dim);font-family:var(--font-mono)">
+				Placed #{gameState.players.length - gameState.aliveCount + 1}/{gameState.players.length}
+			</div>
+			<button class="btn btn-ghost" onclick={() => (showEliminated = false)}
+				>Spectate the rest →</button
+			>
 		</div>
 	</section>
 
-<!-- ============================== FINISHED ============================== -->
+	<!-- ============================== FINISHED ============================== -->
 {:else if phase === 'finished'}
 	{@const placement = me?.placement ?? gameState.players.length}
-	<section class="screen active" id="screen-results">
+	<section class="screen" id="screen-results">
 		<div class="results-wrap">
 			<div class="mini-logo">
 				{#each 'SQUABBLE'.split('') as ch}
 					<div class="mt">{ch}</div>
 				{/each}
 			</div>
-			<div class="placement-badge" class:win={placement === 1} class:lose={placement !== 1} id="placementBadge">#{placement}</div>
+			<div
+				class="placement-badge"
+				class:win={placement === 1}
+				class:lose={placement !== 1}
+				id="placementBadge"
+			>
+				#{placement}
+			</div>
 			<div style="font-family:var(--font-mono);color:var(--ink-dim);letter-spacing:0.05em">
 				{placement === 1 ? 'VICTORY ROYALE' : `Out of ${gameState.players.length} fighters`}
 			</div>
@@ -568,7 +705,9 @@
 				<span class="section-label">Match history (saved locally)</span>
 				<div class="history-list">
 					{#if history.length === 0}
-						<div style="color:var(--ink-faint);font-size:12px;text-align:center;padding:10px">No matches yet &mdash; play your first Squabble!</div>
+						<div style="color:var(--ink-faint);font-size:12px;text-align:center;padding:10px">
+							No matches yet &mdash; play your first Squabble!
+						</div>
 					{:else}
 						{#each history as h}
 							<div class="history-row">

@@ -1,10 +1,11 @@
 <script lang="ts">
+	import BackgroundTiles from '$lib/components/BackgroundTiles.svelte';
 	import './layout.css';
 
 	let { children } = $props();
 </script>
 
-<div id="bgTiles"></div>
+<BackgroundTiles />
 <div id="toastWrap"></div>
 <div id="app">
 	{@render children()}

@@ -30,7 +30,6 @@
 	let myAvatar = $state<import('$lib/game').Avatar>(prefs.avatar || randomAvatar());
 
 	onMount(() => {
-		initBgTiles();
 		document.body.classList.toggle('cb-mode', cbOn);
 	});
 
@@ -63,25 +62,6 @@
 		if (!code) return;
 		persist();
 		goto(resolve(`/room/${code}`));
-	}
-
-	/* ---------- Background tiles ---------- */
-	function initBgTiles() {
-		const wrap = document.getElementById('bgTiles');
-		if (!wrap || wrap.children.length > 0) return;
-		const letters = 'SQUABBLEWORDLE'.split('');
-		const colors = ['var(--green)', 'var(--yellow)', 'var(--gray-tile)'];
-		for (let i = 0; i < 22; i++) {
-			const t = document.createElement('div');
-			t.className = 'falling-tile';
-			t.textContent = letters[Math.floor(Math.random() * letters.length)];
-			t.style.left = Math.random() * 100 + 'vw';
-			t.style.background = colors[Math.floor(Math.random() * colors.length)];
-			t.style.animationDuration = 14 + Math.random() * 16 + 's';
-			t.style.animationDelay = -Math.random() * 20 + 's';
-			t.style.fontSize = 12 + Math.random() * 10 + 'px';
-			wrap.appendChild(t);
-		}
 	}
 </script>
 
@@ -119,7 +99,7 @@
 		<div class="w-full">
 			<div class="flex gap-3 w-full">
 				<button class="flex-1 flex-col gap-1 rounded btn btn-primary" onclick={createRoom}>
-					<span class="text-base">⚔️ Create Game</span>
+					<span class="text-base">Create Game</span>
 					<span class="text-xs font-medium opacity-75 uppercase tracking-wider"
 						>Host a new lobby</span
 					>
@@ -130,7 +110,7 @@
 						showJoin = !showJoin;
 					}}
 				>
-					<span class="text-base">🔑 Join with Code</span>
+					<span class="text-base">Join with Code</span>
 					<span class="text-xs font-medium opacity-75 uppercase tracking-wider"
 						>Enter a room code</span
 					>
