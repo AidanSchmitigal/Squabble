@@ -11,9 +11,28 @@
 
 	let hpPct = $derived(Math.min(100, Math.max(0, player.hp)));
 	let overhealPct = $derived(player.hp > 100 ? ((player.hp - 100) / 100) * 100 : 0);
+
+	let hit = $state(false);
+	let heal = $state(false);
+	let prevHp: number | undefined;
+	$effect(() => {
+		const hp = player.hp;
+		if (prevHp !== undefined) {
+			const delta = hp - prevHp;
+			if (delta < -1) {
+				hit = true;
+				setTimeout(() => hit = false, 400);
+			} else if (delta > 0) {
+				heal = true;
+				setTimeout(() => heal = false, 400);
+			}
+		}
+		prevHp = hp;
+	});
 </script>
 
-<div class="flex gap-2 items-center">
+<div class="card" class:hit={hit} class:heal={heal}>
+	<div class="flex gap-2 items-center">
 	<div class="size-8 border-2 border-border shrink-0">
 		<img class="size-full" src={player.avatar} alt="{player.name} avatar" />
 	</div>
@@ -62,3 +81,41 @@
 		{/each}
 	{/each}
 </div>
+</div>
+
+<style>
+	.card {
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 8px 10px;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		background: var(--surface);
+		transition: border-color 0.2s;
+	}
+	.card.hit {
+		border-color: var(--red);
+		animation: hitFlash 0.4s ease;
+	}
+	.card.heal {
+		border-color: var(--green);
+		animation: healFlash 0.4s ease;
+	}
+	@keyframes hitFlash {
+		0% {
+			background: rgba(229, 72, 77, 0.25);
+		}
+		100% {
+			background: var(--surface);
+		}
+	}
+	@keyframes healFlash {
+		0% {
+			background: rgba(90, 181, 82, 0.25);
+		}
+		100% {
+			background: var(--surface);
+		}
+	}
+</style>

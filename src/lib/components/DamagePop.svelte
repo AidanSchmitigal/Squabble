@@ -15,6 +15,10 @@
 	$effect(() => {
 		if (prevHp !== undefined && hp !== prevHp) {
 			const delta = hp - prevHp;
+			if (delta < 0 && delta > -1) {
+				prevHp = hp;
+				return;
+			}
 			const id = popId++;
 			const text = delta < 0 ? String(delta) : '+' + delta;
 			pops = [...pops, { id, text, isHeal: delta > 0, left: 20 + Math.random() * 60 }];
