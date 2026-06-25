@@ -82,7 +82,10 @@ export function randomAvatar(size = 10): string[] {
 		if (c == null) {
 			avatar[i] = '#ffffff';
 		} else {
-			avatar[i + size + shift] = c;
+			const target = i + size + shift;
+			if (target >= 0 && target < size * size) {
+				avatar[target] = c;
+			}
 		}
 	}
 	return avatar as string[];
@@ -139,6 +142,24 @@ export function evaluateGuess(guess: string, answer: string): TileResult[] {
 export const DEFAULT_SETTINGS: GameSettings = {
 	dmgTick: 1
 };
+
+export function updateKeyStates(
+	keyStates: Record<string, TileResult>,
+	guess: string,
+	result: TileResult[]
+): void {
+	guess.split('').forEach((ch, i) => {
+		const cur = keyStates[ch];
+		const rank: Record<string, number> = { absent: 0, present: 1, correct: 2 };
+		if (!cur || rank[result[i]] > rank[cur]) keyStates[ch] = result[i];
+	});
+}
+
+export function getHpColorClass(hp: number, eliminated: boolean): 'red' | 'yellow' | 'green' {
+	if (eliminated || hp <= 30) return 'red';
+	if (hp <= 60) return 'yellow';
+	return 'green';
+}
 
 export function nextRoomCode(code: string): string {
 	const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';

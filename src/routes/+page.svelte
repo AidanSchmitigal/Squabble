@@ -4,6 +4,7 @@
 	import HeroLogo from '$lib/components/HeroLogo.svelte';
 	import HowToPlay from '$lib/components/HowToPlay.svelte';
 	import { makeRoomCode } from '$lib/game';
+	import { getSound, getColorblind, setSound, setColorblind } from '$lib/storage';
 	import { onMount } from 'svelte';
 
 	let roomInput = $state('');
@@ -13,15 +14,15 @@
 	let cbOn = $state(false);
 
 	onMount(() => {
-		soundOn = localStorage.getItem('squabble-sound') !== 'false';
-		cbOn = localStorage.getItem('squabble-cb') !== 'false' && localStorage.hasItem('squabble-cb');
+		soundOn = getSound();
+		cbOn = getColorblind();
 
 		document.body.classList.toggle('cb-mode', cbOn);
 	});
 
 	$effect(() => {
-		localStorage.setItem('squabble-sound', soundOn ? 'true' : 'false');
-		localStorage.setItem('squabble-cb', cbOn ? 'true' : 'false');
+		setSound(soundOn);
+		setColorblind(cbOn);
 		document.body.classList.toggle('cb-mode', cbOn);
 	});
 

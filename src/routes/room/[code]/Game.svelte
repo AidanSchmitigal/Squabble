@@ -2,7 +2,7 @@
 	import { VALID } from '$lib/assets/valid';
 	import PlayerCard from '$lib/components/PlayerCard.svelte';
 	import DamagePop from '$lib/components/DamagePop.svelte';
-	import { evaluateGuess, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
+	import { evaluateGuess, getHpColorClass, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
@@ -76,8 +76,9 @@
 	});
 
 	const healthColor = $derived.by(() => {
-		if (me.eliminated || me.hp <= 30) return 'from-red-deep to-red';
-		if (me.hp <= 60) return 'from-yellow-deep to-yellow';
+		const tier = getHpColorClass(me.hp, me.eliminated);
+		if (tier === 'red') return 'from-red-deep to-red';
+		if (tier === 'yellow') return 'from-yellow-deep to-yellow';
 		return 'from-green-deep to-green';
 	});
 

@@ -9,7 +9,7 @@
 		class="fixed inset-0 bg-bg/70 backdrop-blur-sm z-50 flex items-center justify-center p-5 animate-fadeup"
 	>
 		<div
-			class="bg-surface border border-border rounded p-6 max-w-md w-full shadow-lg shadow-pop overflow-y-auto max-h-[85vh]"
+			class="bg-surface border border-border rounded p-6 max-w-md w-full shadow-pop overflow-y-auto max-h-[85vh]"
 		>
 			<div class="flex justify-between items-start mb-4">
 				<h2 class="font-display text-lg m-0">How to play</h2>
@@ -64,7 +64,8 @@
 				random rival, sending them garbage.
 			</div>
 			<div class="mb-3 text-sm text-ink-dim">
-				🟩🟨 Green &amp; yellow letters <b class="text-ink">heal you</b> (+3 HP per 🟩, +1 per 🟨) &mdash; every guess helps.
+				🟩🟨 Green &amp; yellow letters <b class="text-ink">heal you</b> (+3 HP per 🟩, +1 per 🟨) &mdash;
+				every guess helps.
 			</div>
 			<div class="mb-3 text-sm text-ink-dim">
 				🏆 Everyone shares the same word list. Last fighter standing wins the Squabble.

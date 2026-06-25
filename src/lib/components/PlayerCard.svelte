@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { evaluateGuess, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
+	import { evaluateGuess, getHpColorClass, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
 
 	let {
 		player,
@@ -46,11 +46,7 @@
 		</div>
 		<div class="w-full h-2 bg-surface-2 rounded-full overflow-hidden border-border border relative">
 			<div
-				class="h-full transition-[width] {hpPct < 30
-					? 'bg-red'
-					: hpPct < 60
-						? 'bg-yellow'
-						: 'bg-green'}"
+				class="h-full transition-[width] {getHpColorClass(player.hp, player.eliminated) === 'red' ? 'bg-red' : getHpColorClass(player.hp, player.eliminated) === 'yellow' ? 'bg-yellow' : 'bg-green'}"
 				style="width:{hpPct}%"
 			></div>
 			{#if overhealPct > 0}

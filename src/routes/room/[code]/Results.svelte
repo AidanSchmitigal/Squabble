@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { toastMsg } from '$lib';
+	import Confetti from '$lib/components/Confetti.svelte';
 	import { type GameState } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
 
@@ -46,6 +47,7 @@
 	}
 </script>
 
+<Confetti />
 <section class="screen">
 	<div class="w-full max-w-xl flex flex-col gap-5 items-center">
 		<div class="flex gap-4 items-center">

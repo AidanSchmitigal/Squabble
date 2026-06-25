@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import AvatarEditor from '$lib/components/AvatarEditor.svelte';
 	import { EMPTY_AVATAR, sanitizeName, type Avatar, type GameState } from '$lib/game';
+	import { getAvatar, getName, setAvatar, setName } from '$lib/storage';
 	import { roomState } from '$lib/room.svelte';
 	import QRCode from 'qrcode';
 	import { onMount } from 'svelte';
@@ -29,10 +30,10 @@
 			qrDataUrl = url;
 		});
 
-		const storedAvatar = localStorage.getItem('squabble-avatar');
+		const storedAvatar = getAvatar();
 		if (storedAvatar) myLobbyAvatar = storedAvatar;
 
-		const storedName = sanitizeName(localStorage.getItem('squabble-name') || 'Player');
+		const storedName = sanitizeName(getName() || 'Player');
 		if (storedName) lobbyName = storedName;
 
 		roomState.send({ type: 'join', name: lobbyName, avatar: myLobbyAvatar });
@@ -103,7 +104,7 @@
 				}}
 				onupdate={(avatar) => {
 					myLobbyAvatar = avatar;
-					localStorage.setItem('squabble-avatar', avatar);
+					setAvatar(avatar);
 					roomState.send({ type: 'set-player', avatar });
 				}}
 			>
@@ -116,7 +117,7 @@
 					style="margin-top:4px"
 					bind:value={lobbyName}
 					oninput={() => {
-						localStorage.setItem('squabble-name', lobbyName);
+						setName(lobbyName);
 						roomState.send({ type: 'set-player', name: lobbyName });
 					}}
 				/>

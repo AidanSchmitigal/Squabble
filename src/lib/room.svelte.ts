@@ -1,15 +1,13 @@
 import { goto } from '$app/navigation';
+import { getPlayerId, setPlayerId } from './storage';
 import {
 	evaluateGuess,
+	updateKeyStates,
 	WORD_LEN,
 	type ClientMessage,
 	type GameState,
 	type ServerMessage
 } from './game';
-
-function storedPlayerKey(code: string) {
-	return `squabble-player-${code}`;
-}
 
 class RoomState {
 	connected = $state(false);
@@ -63,7 +61,7 @@ class RoomState {
 			this.connected = true;
 			this.#reconnectAttempt = 0;
 
-			const storedId = localStorage.getItem(storedPlayerKey(this.#code));
+			const storedId = getPlayerId(this.#code);
 			if (storedId) {
 				ws.send(JSON.stringify({ type: 'join', playerId: storedId } satisfies ClientMessage));
 			}
@@ -79,7 +77,7 @@ class RoomState {
 			const message = JSON.parse(event.data as string) as ServerMessage;
 			if (message.type === 'hello') {
 				this.selfId = message.id;
-				localStorage.setItem(storedPlayerKey(this.#code), message.id);
+				setPlayerId(this.#code, message.id);
 			}
 			if (message.type === 'state') this._gameState = message.state;
 			if (message.type === 'suggest-room') {
@@ -114,11 +112,7 @@ class RoomState {
 		const result = evaluateGuess(guess, answer);
 
 		me.guesses = [...me.guesses, guess];
-		guess.split('').forEach((ch, i) => {
-			const cur = me.keyStates[ch];
-			const rank: Record<string, number> = { absent: 0, present: 1, correct: 2 };
-			if (!cur || rank[result[i]] > rank[cur]) me.keyStates[ch] = result[i];
-		});
+		updateKeyStates(me.keyStates, guess, result);
 	}
 }
 
