@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { hpClass, toastMsg } from '$lib';
+	import { toastMsg } from '$lib';
 	import { type GameState } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
 
@@ -38,25 +38,10 @@
 		)
 	);
 
-	let matchHistory = $state<{ place: number; total: number; words: number; date: string }[]>([]);
-	$effect(() => {
-		try {
-			matchHistory = JSON.parse(localStorage.getItem('squabble_history') || '[]');
-		} catch {
-			matchHistory = [];
-		}
-	});
-
 	function playAgain() {
 		roomState.disconnect();
 		goto(resolve('/'));
 	}
-
-	function backToMain() {
-		roomState.disconnect();
-		goto(resolve('/'));
-	}
-
 	function shareResult() {
 		const txt = `I placed #${placement} in Squabble!`;
 		navigator.clipboard?.writeText(txt).catch(() => {});
@@ -64,94 +49,82 @@
 	}
 </script>
 
-<section class="screen active" id="screen-results">
-	<div class="results-wrap">
-		<div class="results-banner">
+<section class="screen">
+	<div class="w-full max-w-xl flex flex-col gap-5 items-center">
+		<div class="flex gap-4 items-center">
 			{#if winner}
 				{@const isMe = winner.id === selfId}
-				<div class="winner-avatar">
-					<img src={winner.avatar} alt="{winner.name} avatar" />
+				<div class="size-10 relative">
+					<img src={winner.avatar} alt="{winner.name} avatar" class="size-full" />
+					<div
+						class="absolute -top-4 -right-2 text-xl rotate-15 drop-shadow-sm drop-shadow-neutral-600"
+					>
+						👑
+					</div>
 				</div>
-				<div class="winner-label">👑 {isMe ? 'You won!' : winner.name + ' won!'}</div>
+				<div class="font-bold font-display text-6xl">
+					{isMe ? 'You won!' : winner.name + ' won!'}
+				</div>
 			{:else}
-				<div class="winner-label">Game Over</div>
+				<div class="font-bold font-display text-6xl">Game Over</div>
 			{/if}
 		</div>
 
-		<div class="stat-grid">
-			<div class="stat-box">
-				<div class="val">{me?.wordsSolved ?? 0}</div>
-				<div class="lbl">Words solved</div>
+		<hr />
+
+		<div class="grid grid-cols-2 gap-3 items-center w-full">
+			<div class="bg-surface-2 border border-border rounded-sm p-3 text-center">
+				<div class="font-mono text-2xl font-bold text-yellow">{me?.wordsSolved ?? 0}</div>
+				<div class="text-xs text-ink-dim uppercase tracking-wider mt-0.5">Words solved</div>
 			</div>
-			<div class="stat-box">
-				<div class="val">{me?.damageDealt ?? 0}</div>
-				<div class="lbl">Damage dealt</div>
+			<div class="bg-surface-2 border border-border rounded-sm p-3 text-center">
+				<div class="font-mono text-2xl font-bold text-yellow">{me?.damageDealt ?? 0}</div>
+				<div class="text-xs text-ink-dim uppercase tracking-wider mt-0.5">Damage dealt</div>
 			</div>
-			<div class="stat-box">
-				<div class="val">{me?.damageTaken ?? 0}</div>
-				<div class="lbl">Damage taken</div>
+			<div class="bg-surface-2 border border-border rounded-sm p-3 text-center">
+				<div class="font-mono text-2xl font-bold text-yellow">{me?.damageTaken ?? 0}</div>
+				<div class="text-xs text-ink-dim uppercase tracking-wider mt-0.5">Damage taken</div>
 			</div>
-			<div class="stat-box">
-				<div class="val">{timeSurvived}s</div>
-				<div class="lbl">Time survived</div>
+			<div class="bg-surface-2 border border-border rounded-sm p-3 text-center">
+				<div class="font-mono text-2xl font-bold text-yellow">{timeSurvived}s</div>
+				<div class="text-xs text-ink-dim uppercase tracking-wider mt-0.5">Time survived</div>
 			</div>
 		</div>
 
-		<div class="results-grid">
-			<div class="card">
-				<span class="section-label">Final Standings</span>
-				<div class="standings-list">
+		<hr />
+
+		<div class="flex flex-col gap-3 items-center w-full">
+			<div class="w-full">
+				<span class="font-mono pl-1 text-xs tracking-widerest uppercase text-ink-faint block mb-2"
+					>Final Standings</span
+				>
+				<div class="flex flex-col gap-3 w-full">
 					{#each sorted as p, i (i)}
 						{@const rank = i + 1}
 						<div
-							class="standing-row"
+							class="flex gap-4 items-center bg-surface border border-border rounded-sm p-3 text-center"
 							class:me={p.id === selfId}
 							class:winner={p.id === gameState.winnerId}
 						>
-							<span class="rank-badge"
+							<span class="text-3xl"
 								>{rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span
 							>
-							<div class="avatar-frame"><img src={p.avatar} alt="{p.name} avatar" /></div>
-							<span class="pname">{p.name} {p.id === selfId ? '(you)' : ''}</span>
-							<div class="hp-wrap-sm">
-								<div class="hp-bar-track-sm">
-									<div
-										class="hp-bar-fill-sm {hpClass(p.hp)}"
-										style="width:{Math.max(0, p.hp)}%"
-									></div>
-								</div>
-								<span class="hp-num-sm">{Math.max(0, Math.round(p.hp))}</span>
+							<div class="size-8">
+								<img src={p.avatar} alt="{p.name} avatar" class="size-full" />
 							</div>
-							<span class="word-count">📜 {p.wordIndex + 1}</span>
+							<span class="text-ink">{p.name} {p.id === selfId ? '(you)' : ''}</span>
+							<span class="ml-auto font-bold">📜 {p.wordIndex + 1}</span>
 						</div>
 					{/each}
 				</div>
 			</div>
-
-			<div class="card" style="width:100%">
-				<span class="section-label">Match history (saved locally)</span>
-				<div class="history-list">
-					{#if matchHistory.length === 0}
-						<div style="color:var(--ink-faint);font-size:12px;text-align:center;padding:10px">
-							No matches yet &mdash; play your first Squabble!
-						</div>
-					{:else}
-						{#each matchHistory as h, i (i)}
-							<div class="history-row">
-								<span>#{h.place} <span style="color:var(--ink-faint)">/ {h.total}</span></span>
-								<span><b>{h.words}</b> words</span>
-								<span>{new Date(h.date).toLocaleDateString()}</span>
-							</div>
-						{/each}
-					{/if}
-				</div>
-			</div>
 		</div>
 
-		<div class="results-actions">
+		<hr />
+
+		<div class="flex gap-2">
 			<button class="btn btn-primary" onclick={playAgain}>↻ Play Again</button>
-			<button class="btn btn-purple" onclick={shareResult}>📋 Copy result</button>
-			<button class="btn btn-ghost" onclick={backToMain}>Back to main menu</button>
+			<button class="btn btn-yellow" onclick={shareResult}>📋 Copy result</button>
 		</div>
 	</div>
 </section>

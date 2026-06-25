@@ -370,10 +370,7 @@ export class GameRoom {
 				if (!player || player.eliminated || this.phase !== 'playing') return;
 
 				this.applyDamage(player, 1);
-
-				if (player.eliminated) {
-					this.broadcastState();
-				}
+				this.broadcastState();
 			},
 			Math.max(1000, interval)
 		);

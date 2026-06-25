@@ -89,7 +89,7 @@
 					>
 				</button>
 				<button
-					class="flex-1 flex-col gap-1 rounded btn btn-purple"
+					class="flex-1 flex-col gap-1 rounded btn btn-yellow"
 					onclick={() => {
 						showJoin = !showJoin;
 					}}
@@ -114,7 +114,7 @@
 						bind:value={roomInput}
 						onkeydown={(e) => e.key === 'Enter' && joinRoom()}
 					/>
-					<button class="btn btn-purple mb-1.5" onclick={joinRoom}>Join</button>
+					<button class="btn btn-yellow mb-1.5" onclick={joinRoom}>Join</button>
 				</div>{/if}
 		</div>
 
