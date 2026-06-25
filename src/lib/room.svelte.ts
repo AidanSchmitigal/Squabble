@@ -8,6 +8,7 @@ import {
 	type GameState,
 	type ServerMessage
 } from './game';
+import { resolve } from '$app/paths';
 
 class RoomState {
 	connected = $state(false);
@@ -82,9 +83,9 @@ class RoomState {
 			if (message.type === 'state') this._gameState = message.state;
 			if (message.type === 'suggest-room') {
 				if (message.roomCode) {
-					goto(`/room/${message.roomCode}`);
+					goto(resolve(`/room/${message.roomCode}`));
 				} else {
-					goto('/');
+					goto(resolve('/'));
 				}
 			}
 		});

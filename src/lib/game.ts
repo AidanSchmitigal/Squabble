@@ -56,8 +56,10 @@ export type ServerMessage =
 	| { type: 'error'; message: string }
 	| { type: 'suggest-room'; roomCode: string | null };
 
+const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+
 export function makeRoomCode(): string {
-	const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+	const alphabet = ROOM_CODE_ALPHABET;
 	let code = '';
 	for (let i = 0; i < 4; i++) {
 		code += alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -68,8 +70,10 @@ export function makeRoomCode(): string {
 export const EMPTY_AVATAR =
 	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIUlEQVR4AezQMQ0AAADCMIJ/z+CATAC7d9WBWbCPEwrzFAAA//+q4AtiAAAABklEQVQDALXgJ+0xUinGAAAAAElFTkSuQmCC';
 
+export const AVATAR_PALETTE = ['#1a1a1a', '#ff0077', '#fff955', '#44c183', '#176de6', '#b752cb'];
+
 export function randomAvatar(size = 10): string[] {
-	const palette = ['#1a1a1a', '#ff0077', '#fff955', '#44c183', '#176de6', '#b752cb'].slice(
+	const palette = AVATAR_PALETTE.slice(
 		Math.floor(Math.random() * 3),
 		3 + Math.floor(Math.random() * 3)
 	);
@@ -96,25 +100,6 @@ export function sanitizeName(name: string): string {
 	const clean = name.trim().replace(/\s+/g, ' ').slice(0, 18);
 	return clean || defaults[Math.floor(Math.random() * defaults.length)];
 }
-
-export const BOT_NAMES = [
-	'Pixel',
-	'Nova',
-	'Ziggy',
-	'Quokka',
-	'Mochi',
-	'Sable',
-	'Tango',
-	'Wisp',
-	'Juno',
-	'Remy',
-	'Echo',
-	'Birdie',
-	'Otter',
-	'Finch',
-	'Koda',
-	'Vex'
-];
 
 export const WORD_LEN = 5;
 
@@ -162,7 +147,7 @@ export function getHpColorClass(hp: number, eliminated: boolean): 'red' | 'yello
 }
 
 export function nextRoomCode(code: string): string {
-	const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+	const alphabet = ROOM_CODE_ALPHABET;
 	const chars = code.split('');
 	for (let i = chars.length - 1; i >= 0; i--) {
 		const idx = alphabet.indexOf(chars[i]);

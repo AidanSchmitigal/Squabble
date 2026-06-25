@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { EMPTY_AVATAR, randomAvatar } from '$lib/game';
+	import { AVATAR_PALETTE, EMPTY_AVATAR, randomAvatar } from '$lib/game';
 	import { throttle } from '$lib/index';
 	import type { Snippet } from 'svelte';
 
@@ -15,7 +15,7 @@
 		oninstant?: (url: string) => void;
 	} = $props();
 
-	const palette = ['#ffffff', '#1a1a1a', '#ff0077', '#fff955', '#44c183', '#176de6', '#b752cb'];
+	const palette = ['#ffffff', ...AVATAR_PALETTE];
 	const CANVAS_WIDTH = 10;
 
 	const throttledStrokeTick = throttle(() => {
