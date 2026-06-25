@@ -119,6 +119,7 @@
 									class:correct={result === 'correct'}
 									class:present={result === 'present'}
 									class:absent={result === 'absent'}
+									class:garbage={me.garbageMask[rowIdx]}
 								>
 									{letter}
 								</div>
@@ -210,6 +211,7 @@
 							class:bg-yellow={result === 'present' && !garbage}
 							class:bg-gray-tile={result === 'absent' && !garbage}
 							class:bg-surface-3={garbage}
+							class:opacity-30={p.garbageMask[rowIdx]}
 						></div>
 					{/each}
 				{/each}
@@ -361,5 +363,11 @@
 		color: var(--ink-faint);
 		border-color: var(--surface-3);
 		opacity: 0.5;
+	}
+
+	/* GARBAGE */
+
+	.tile.garbage {
+		opacity: 0.4;
 	}
 </style>

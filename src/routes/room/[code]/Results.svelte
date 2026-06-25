@@ -9,14 +9,20 @@
 
 	let me = $derived(gameState.players.find((p) => p.id === selfId));
 
-	let guessHistory = $state<string[]>([]);
-	$effect(() => {
-		if (me) guessHistory = me.guesses.slice();
-	});
-
 	let winner = $derived(gameState.players.find((p) => p.id === gameState.winnerId));
 
 	let placement = $derived(me?.placement ?? gameState.players.length);
+
+	let timeSurvived = $derived.by(() => {
+		if (!gameState.gameStartedAt) return 0;
+		if (me?.eliminatedAt) {
+			return Math.floor((me.eliminatedAt - gameState.gameStartedAt) / 1000);
+		}
+		if (gameState.gameEndedAt) {
+			return Math.floor((gameState.gameEndedAt - gameState.gameStartedAt) / 1000);
+		}
+		return 0;
+	});
 
 	let sorted = $derived(
 		[...gameState.players].sort((a, b) =>
@@ -78,15 +84,15 @@
 				<div class="lbl">Words solved</div>
 			</div>
 			<div class="stat-box">
-				<div class="val">0</div>
+				<div class="val">{me?.damageDealt ?? 0}</div>
 				<div class="lbl">Damage dealt</div>
 			</div>
 			<div class="stat-box">
-				<div class="val">0</div>
+				<div class="val">{me?.damageTaken ?? 0}</div>
 				<div class="lbl">Damage taken</div>
 			</div>
 			<div class="stat-box">
-				<div class="val">{Math.floor(((me?.guesses.length ?? 0) * 30) / 1000)}s</div>
+				<div class="val">{timeSurvived}s</div>
 				<div class="lbl">Time survived</div>
 			</div>
 		</div>
@@ -97,7 +103,11 @@
 				<div class="standings-list">
 					{#each sorted as p, i (i)}
 						{@const rank = i + 1}
-						<div class="standing-row" class:me={p.id === selfId} class:winner={p.id === gameState.winnerId}>
+						<div
+							class="standing-row"
+							class:me={p.id === selfId}
+							class:winner={p.id === gameState.winnerId}
+						>
 							<span class="rank-badge"
 								>{rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span
 							>

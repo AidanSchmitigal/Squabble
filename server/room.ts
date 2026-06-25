@@ -23,6 +23,8 @@ export class GameRoom {
 	words: string[] = [];
 	aliveCount = 0;
 	winnerId: string | null = null;
+	gameStartedAt: number | null = null;
+	gameEndedAt: number | null = null;
 
 	connections = new Map<string, WebSocket>();
 	private spectatorIds = new Set<string>();
@@ -44,7 +46,9 @@ export class GameRoom {
 			words: this.words,
 			players: this.players,
 			aliveCount: this.aliveCount,
-			winnerId: this.winnerId
+			winnerId: this.winnerId,
+			gameStartedAt: this.gameStartedAt,
+			gameEndedAt: this.gameEndedAt
 		};
 	}
 
@@ -166,9 +170,13 @@ export class GameRoom {
 			placement: null,
 			wordIndex: 0,
 			wordsSolved: 0,
+			damageDealt: 0,
+			damageTaken: 0,
+			eliminatedAt: null,
 			guesses: [],
 			keyStates: {},
-			miniGrid: new Array(WORD_LEN * 6).fill(false)
+			miniGrid: new Array(WORD_LEN * 6).fill(false),
+			garbageMask: new Array(6).fill(false)
 		});
 	}
 
@@ -188,6 +196,7 @@ export class GameRoom {
 		this.words = [ANSWERS[Math.floor(Math.random() * ANSWERS.length)]];
 		this.aliveCount = this.players.length;
 		this.winnerId = null;
+		this.gameStartedAt = Date.now();
 
 		for (const p of this.players) {
 			p.hp = 100;
@@ -195,10 +204,14 @@ export class GameRoom {
 			p.placement = null;
 			p.wordIndex = 0;
 			p.wordsSolved = 0;
+			p.damageDealt = 0;
+			p.damageTaken = 0;
+			p.eliminatedAt = null;
 			p.guesses = [];
 			p.keyStates = {};
 			p.miniGrid = new Array(WORD_LEN * 6).fill(false);
-			// this.startDamageTick(p.id);
+			p.garbageMask = new Array(6).fill(false);
+			this.startDamageTick(p.id);
 		}
 	}
 
@@ -242,7 +255,9 @@ export class GameRoom {
 
 		const target = this.randomAliveOpponent(player.id);
 		if (target) {
-			this.applyDamage(target, 16 + Math.floor(Math.random() * 10));
+			const dmg = 16 + Math.floor(Math.random() * 10);
+			player.damageDealt += dmg;
+			this.applyDamage(target, dmg);
 			this.addGarbage(target);
 		}
 
@@ -253,6 +268,7 @@ export class GameRoom {
 		player.wordIndex++;
 		player.guesses = [];
 		player.keyStates = {};
+		player.garbageMask = new Array(6).fill(false);
 		if (player.wordIndex >= this.words.length) {
 			let newWord;
 			do {
@@ -268,19 +284,35 @@ export class GameRoom {
 
 	private applyDamage(player: SquabblePlayer, amount: number) {
 		player.hp = Math.max(0, player.hp - amount);
+		player.damageTaken += amount;
 		if (player.hp <= 0 && !player.eliminated) {
 			this.eliminatePlayer(player);
 		}
 	}
 
 	private addGarbage(player: SquabblePlayer) {
-		if (player.guesses.length >= 5) return;
-		const randomWord = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
-		this.handleSubmitGuess(player.id, randomWord);
+		if (player.guesses.length >= 6) return;
+
+		let word;
+		do {
+			word = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+		} while (this.words.includes(word));
+		const answer = this.words[player.wordIndex % this.words.length];
+		const result = evaluateGuess(word, answer);
+
+		player.guesses.push(word);
+		player.garbageMask[player.guesses.length - 1] = true;
+
+		word.split('').forEach((ch, i) => {
+			const cur = player.keyStates[ch];
+			const rank: Record<string, number> = { absent: 0, present: 1, correct: 2 };
+			if (!cur || rank[result[i]] > rank[cur]) player.keyStates[ch] = result[i];
+		});
 	}
 
 	private eliminatePlayer(player: SquabblePlayer) {
 		player.eliminated = true;
+		player.eliminatedAt = Date.now();
 		const alive = this.players.filter((p) => !p.eliminated);
 		player.placement = alive.length + 1;
 		this.aliveCount = alive.length;
@@ -305,6 +337,7 @@ export class GameRoom {
 
 	private endGame() {
 		this.phase = 'finished';
+		this.gameEndedAt = Date.now();
 
 		for (const [id] of this.damageTimers) {
 			this.stopDamageTick(id);
@@ -364,7 +397,9 @@ export class GameRoom {
 	}
 
 	private randomAliveOpponent(excludeId: string): SquabblePlayer | null {
-		const alive = this.players.filter((p) => p.id !== excludeId && !p.eliminated);
+		const alive = this.players.filter(
+			(p) => p.id !== excludeId && !p.eliminated && p.guesses.length < 5
+		);
 		if (alive.length === 0) return null;
 		return alive[Math.floor(Math.random() * alive.length)];
 	}

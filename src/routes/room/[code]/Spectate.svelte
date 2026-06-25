@@ -52,6 +52,7 @@
 									class:bg-yellow={result === 'present' && !garbage}
 									class:bg-gray-tile={result === 'absent' && !garbage}
 									class:bg-surface-3={garbage}
+									class:opacity-30={p.garbageMask[rowIdx]}
 								></div>
 							{/each}
 						{/each}

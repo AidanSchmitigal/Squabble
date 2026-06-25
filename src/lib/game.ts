@@ -19,9 +19,13 @@ export type SquabblePlayer = {
 	placement: number | null;
 	wordIndex: number;
 	wordsSolved: number;
+	damageDealt: number;
+	damageTaken: number;
+	eliminatedAt: number | null;
 	guesses: string[];
 	keyStates: Record<string, TileResult>;
 	miniGrid: boolean[];
+	garbageMask: boolean[];
 };
 
 export type GameState = {
@@ -32,6 +36,8 @@ export type GameState = {
 	words: string[];
 	aliveCount: number;
 	winnerId: string | null;
+	gameStartedAt: number | null;
+	gameEndedAt: number | null;
 };
 
 export type ClientMessage =
