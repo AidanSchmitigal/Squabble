@@ -2,20 +2,19 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import { WebSocket, WebSocketServer } from 'ws';
 import {
-	evaluateGuess,
 	ALLOWED_5,
 	ANSWERS_5,
-	sanitizeName,
 	DEFAULT_SETTINGS,
-	makeAvatar,
+	evaluateGuess,
+	randomAvatar,
+	sanitizeName,
 	type Avatar,
 	type ClientMessage,
-	type ServerMessage,
-	type GameState,
-	type SquabblePlayer,
-	type GameSettings,
 	type GamePhase,
-	type TileResult
+	type GameSettings,
+	type GameState,
+	type ServerMessage,
+	type SquabblePlayer
 } from '../src/lib/game';
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
@@ -132,7 +131,7 @@ class GameRoom {
 		this.players.push({
 			id,
 			name: finalName,
-			avatar: avatar ?? makeAvatar(),
+			avatar: avatar ?? '',
 			isHost,
 			connected: true,
 			hp: 100,
@@ -151,6 +150,7 @@ class GameRoom {
 		if (!player) return;
 		if (name) player.name = sanitizeName(name);
 		if (avatar) player.avatar = avatar;
+		this.broadcastState();
 	}
 
 	private handleStartGame(senderId: string) {
@@ -181,10 +181,8 @@ class GameRoom {
 		const player = this.players.find((p) => p.id === senderId);
 		if (!player || player.eliminated) return;
 
-		const wordLen = this.settings.wordLen;
-		if (guess.length !== wordLen) return;
+		if (guess.length !== 5) return;
 		if (!ALLOWED_5.has(guess)) return;
-		if (player.guesses.length >= 6) return;
 
 		const answer = this.words[player.wordIndex % this.words.length];
 		const result = evaluateGuess(guess, answer);
@@ -297,9 +295,7 @@ class GameRoom {
 
 		// Assign remaining placements to eliminated players
 		const placed = this.players.filter((p) => p.placement !== null).length;
-		const unplaced = this.players
-			.filter((p) => p.placement === null)
-			.sort((a, b) => b.hp - a.hp);
+		const unplaced = this.players.filter((p) => p.placement === null).sort((a, b) => b.hp - a.hp);
 
 		unplaced.forEach((p, i) => {
 			p.placement = placed + i + 1;
@@ -312,17 +308,20 @@ class GameRoom {
 		this.stopDamageTick(playerId);
 		const interval = this.settings.dmgTick * 1000;
 
-		const timer = setInterval(() => {
-			const player = this.players.find((p) => p.id === playerId);
-			if (!player || player.eliminated || this.phase !== 'playing') return;
+		const timer = setInterval(
+			() => {
+				const player = this.players.find((p) => p.id === playerId);
+				if (!player || player.eliminated || this.phase !== 'playing') return;
 
-			this.applyDamage(player, 1);
+				this.applyDamage(player, 1);
 
-			// Only broadcast if state actually changed
-			if (player.eliminated) {
-				this.broadcastState();
-			}
-		}, Math.max(1000, interval));
+				// Only broadcast if state actually changed
+				if (player.eliminated) {
+					this.broadcastState();
+				}
+			},
+			Math.max(1000, interval)
+		);
 
 		this.damageTimers.set(playerId, timer);
 	}

@@ -3,53 +3,38 @@
 	import { resolve } from '$app/paths';
 	import HeroLogo from '$lib/components/HeroLogo.svelte';
 	import HowToPlay from '$lib/components/HowToPlay.svelte';
-	import { makeRoomCode, makeAvatar, randomAvatar } from '$lib/game';
+	import { makeRoomCode } from '$lib/game';
 	import { onMount } from 'svelte';
 
 	let roomInput = $state('');
 	let showJoin = $state(false);
 
-	/* ---------- Preferences ---------- */
-	const PREFS_KEY = 'squabble_prefs';
-	function loadPrefs() {
-		try {
-			return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
-		} catch {
-			return {};
-		}
-	}
-	function savePrefs(data: Record<string, unknown>) {
-		const merged = { ...loadPrefs(), ...data };
-		localStorage.setItem(PREFS_KEY, JSON.stringify(merged));
-	}
-
-	let prefs = $state(loadPrefs());
-	let playerName = $state(prefs.name || '');
-	let soundOn = $state(prefs.sound !== false);
-	let cbOn = $state(!!prefs.cb);
-	let myAvatar = $state<import('$lib/game').Avatar>(prefs.avatar || randomAvatar());
+	let soundOn = $state(true);
+	let cbOn = $state(false);
 
 	onMount(() => {
+		soundOn = localStorage.getItem('squabble-sound') !== 'false';
+		cbOn = localStorage.getItem('squabble-cb') !== 'false';
+
 		document.body.classList.toggle('cb-mode', cbOn);
 	});
 
-	function persist() {
-		savePrefs({ name: playerName, sound: soundOn, cb: cbOn, avatar: myAvatar });
-	}
+	$effect(() => {
+		localStorage.setItem('squabble-sound', soundOn ? 'true' : 'false');
+		localStorage.setItem('squabble-cb', cbOn ? 'true' : 'false');
+		document.body.classList.toggle('cb-mode', cbOn);
+	});
 
 	function toggleSound() {
 		soundOn = !soundOn;
-		persist();
 	}
+
 	function toggleCB() {
 		cbOn = !cbOn;
-		document.body.classList.toggle('cb-mode', cbOn);
-		persist();
 	}
 
 	function createRoom() {
 		const code = makeRoomCode();
-		persist();
 		goto(resolve(`/room/${code}`));
 	}
 
@@ -60,7 +45,6 @@
 			.replace(/[^A-Z]/g, '')
 			.slice(0, 4);
 		if (!code) return;
-		persist();
 		goto(resolve(`/room/${code}`));
 	}
 </script>
