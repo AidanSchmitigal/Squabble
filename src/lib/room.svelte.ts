@@ -1,4 +1,10 @@
-import type { ClientMessage, GameState, ServerMessage } from './game';
+import {
+	evaluateGuess,
+	WORD_LEN,
+	type ClientMessage,
+	type GameState,
+	type ServerMessage
+} from './game';
 
 function storedPlayerKey(code: string) {
 	return `squabble-player-${code}`;
@@ -87,6 +93,24 @@ class RoomState {
 		if (this.#socket?.readyState === WebSocket.OPEN) {
 			this.#socket.send(JSON.stringify(message));
 		}
+	}
+
+	optimisticSubmitGuess(guess: string) {
+		const gs = this._gameState;
+		if (!gs) return;
+		const me = gs.players.find((p) => p.id === this.selfId);
+		if (!me || me.eliminated) return;
+		if (guess.length !== WORD_LEN) return;
+
+		const answer = gs.words[me.wordIndex % gs.words.length];
+		const result = evaluateGuess(guess, answer);
+
+		me.guesses = [...me.guesses, guess];
+		guess.split('').forEach((ch, i) => {
+			const cur = me.keyStates[ch];
+			const rank: Record<string, number> = { absent: 0, present: 1, correct: 2 };
+			if (!cur || rank[result[i]] > rank[cur]) me.keyStates[ch] = result[i];
+		});
 	}
 }
 

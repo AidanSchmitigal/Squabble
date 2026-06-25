@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { type GameState } from '$lib/game';
+	import { evaluateGuess, WORD_LEN, type GameState } from '$lib/game';
 
 	let { gameState }: { gameState: GameState } = $props();
 </script>
@@ -39,11 +39,21 @@
 					</div>
 
 					<div class="grid grid-cols-5 gap-0.5">
-						{#each Array(5 * 6) as _, i (i)}
-							<div
-								class="w-full aspect-square bg-surface-2 rounded-xs"
-								class:fill={p.miniGrid[i]}
-							></div>
+						{#each Array(6) as _, rowIdx (rowIdx)}
+							{@const guess = p.guesses[rowIdx]}
+							{#each Array(WORD_LEN) as _, colIdx (colIdx)}
+								{@const cellIdx = rowIdx * WORD_LEN + colIdx}
+								{@const result = guess ? evaluateGuess(guess, gameState.words[p.wordIndex])[colIdx] : null}
+								{@const garbage = p.miniGrid[cellIdx]}
+								<div
+									class="w-full aspect-square rounded-xs"
+									class:bg-surface-2={!result && !garbage}
+									class:bg-green={result === 'correct' && !garbage}
+									class:bg-yellow={result === 'present' && !garbage}
+									class:bg-gray-tile={result === 'absent' && !garbage}
+									class:bg-surface-3={garbage}
+								></div>
+							{/each}
 						{/each}
 					</div>
 					<div class="font-mono text-[10px] text-ink-faint text-right">

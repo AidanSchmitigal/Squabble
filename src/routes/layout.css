@@ -75,6 +75,18 @@ body.reduced-motion * {
 	animation-delay: calc(--value(integer, [integer]) * 1ms);
 }
 
+@layer utilities {
+	.rtl {
+		direction: rtl;
+	}
+	.not-rtl {
+		direction: unset;
+	}
+	.ltr {
+		direction: ltr;
+	}
+}
+
 * {
 	box-sizing: border-box;
 }

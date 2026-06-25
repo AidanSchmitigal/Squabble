@@ -177,7 +177,7 @@ export class GameRoom {
 			wordsSolved: 0,
 			guesses: [],
 			keyStates: {},
-			miniGrid: new Array(15).fill(false)
+			miniGrid: new Array(WORD_LEN * 6).fill(false)
 		});
 	}
 
@@ -206,7 +206,7 @@ export class GameRoom {
 			p.wordsSolved = 0;
 			p.guesses = [];
 			p.keyStates = {};
-			p.miniGrid = new Array(15).fill(false);
+			p.miniGrid = new Array(WORD_LEN * 6).fill(false);
 			// this.startDamageTick(p.id);
 		}
 	}
@@ -283,7 +283,7 @@ export class GameRoom {
 		if (empty !== -1) {
 			player.miniGrid[empty] = true;
 		} else {
-			player.miniGrid = new Array(15).fill(false);
+			player.miniGrid = new Array(WORD_LEN * 6).fill(false);
 		}
 	}
 

@@ -8,7 +8,8 @@
 		background: colors[Math.floor(Math.random() * colors.length)],
 		duration: `${14 + Math.random() * 16}s`,
 		delay: `${-Math.random() * 20}s`,
-		fontSize: `${12 + Math.random() * 10}px`
+		size: `${0.8 + Math.random() * 0.5}`,
+		rotate: `${Math.random() * 360}deg`
 	}));
 </script>
 
@@ -20,7 +21,7 @@
 			style:background={tile.background}
 			style:animation-duration={tile.duration}
 			style:animation-delay={tile.delay}
-			style:font-size={tile.fontSize}
+			style="--rotate:{tile.rotate};--size:{tile.size}"
 		>
 			{tile.letter}
 		</div>
@@ -55,10 +56,10 @@
 
 	@keyframes fallDown {
 		0% {
-			transform: translateY(-5vh) rotate(0deg);
+			transform: translateY(-5vh) rotate(0deg) scale(var(--size));
 		}
 		100% {
-			transform: translateY(110vh) rotate(40deg);
+			transform: translateY(110vh) rotate(var(--rotate)) scale(var(--size));
 		}
 	}
 </style>

@@ -1,12 +1,14 @@
 <script lang="ts">
 	import { VALID } from '$lib/assets/valid';
-	import { evaluateGuess, type GameState, WORD_LEN } from '$lib/game';
+	import { evaluateGuess, type GameState, WORD_LEN, type SquabblePlayer } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
 	let me = $derived(gameState.players.find((p) => p.id === selfId)!); // Assuming you can only get this far if you are in the game. Otherwise you should be spectating at a different route / component
 	let others = $derived(gameState.players.filter((p) => p.id !== selfId));
+	let othersFirstHalf = $derived(others.filter((_, i) => i % 2 === 0));
+	let othersSecondHalf = $derived(others.filter((_, i) => i % 2 === 1));
 
 	let currentGuess = $state('');
 	let shakeRow: number | null = $state(null);
@@ -37,7 +39,9 @@
 			setTimeout(() => (shakeRow = null), 400);
 			return;
 		}
-		roomState.send({ type: 'submit-guess', guess: currentGuess });
+		const guess = currentGuess.toLowerCase();
+		roomState.optimisticSubmitGuess(guess);
+		roomState.send({ type: 'submit-guess', guess });
 		currentGuess = '';
 	}
 
@@ -91,46 +95,8 @@
 		</div>
 
 		<div class="grid grid-cols-[1fr_auto_1fr] gap-4 w-full items-start">
-			<div class="w-full grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-4">
-				{#each [...others, ...others, ...others] as p, i (i)}
-					{@const hpPct = Math.max(0, p.hp)}
-					<div class="flex flex-col gap-1" class:dead={p.eliminated}>
-						<div class="flex gap-1">
-							<div class="size-8 border-2 border-border">
-								<img class="size-full" src={p.avatar} alt="{p.name} avatar" />
-							</div>
-							<div class="flex flex-col gap-1 flex-1">
-								<div
-									class="text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis flex gap-2 items-baseline"
-								>
-									{p.name}
-									{#if p.eliminated}<span class="skull">💀</span>{/if}
-								</div>
-								<div
-									class="w-full h-2 bg-surface-2 rounded-full overflow-hidden border-border border relative"
-								>
-									<div
-										class="h-full transition-[width] {hpPct < 30
-											? 'bg-red'
-											: hpPct < 60
-												? 'bg-yellow'
-												: 'bg-green'}"
-										style="width:{hpPct}%"
-									></div>
-								</div>
-							</div>
-						</div>
-
-						<div class="grid grid-cols-5 gap-0.5">
-							{#each Array(WORD_LEN * 6) as _, i (i)}
-								<div
-									class="w-full aspect-square bg-surface-2 rounded-xs"
-									class:fill={p.miniGrid[i]}
-								></div>
-							{/each}
-						</div>
-					</div>
-				{/each}
+			<div class="w-full grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-4 rtl">
+				{@render opponents(othersFirstHalf)}
 			</div>
 
 			<div class="flex flex-col items-center gap-4 min-w-0 sticky top-22">
@@ -166,7 +132,7 @@
 						<div class="flex gap-1.5 justify-center">
 							{#if ri === 2}<button class="key wide" onclick={submitGuess}>ENTER</button>{/if}
 							{#each row.split('') as ch, i (i)}
-								{@const st = keyStates[ch]}
+								{@const st = keyStates[ch.toLowerCase()]}
 								<button
 									class="key"
 									class:correct={st === 'correct'}
@@ -182,45 +148,7 @@
 			</div>
 
 			<div class="w-full grid grid-cols-[repeat(auto-fill,minmax(128px,1fr))] gap-4">
-				{#each [...others, ...others, ...others] as p, i (i)}
-					{@const hpPct = Math.max(0, p.hp)}
-					<div class="flex flex-col gap-1" class:dead={p.eliminated}>
-						<div class="flex gap-1">
-							<div class="size-8 border-2 border-border">
-								<img class="size-full" src={p.avatar} alt="{p.name} avatar" />
-							</div>
-							<div class="flex flex-col gap-1 flex-1">
-								<div
-									class="text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis flex gap-2 items-baseline"
-								>
-									{p.name}
-									{#if p.eliminated}<span class="skull">💀</span>{/if}
-								</div>
-								<div
-									class="w-full h-2 bg-surface-2 rounded-full overflow-hidden border-border border relative"
-								>
-									<div
-										class="h-full transition-[width] {hpPct < 30
-											? 'bg-red'
-											: hpPct < 60
-												? 'bg-yellow'
-												: 'bg-green'}"
-										style="width:{hpPct}%"
-									></div>
-								</div>
-							</div>
-						</div>
-
-						<div class="grid grid-cols-5 gap-0.5">
-							{#each Array(WORD_LEN * 6) as _, i (i)}
-								<div
-									class="w-full aspect-square bg-surface-2 rounded-xs"
-									class:fill={p.miniGrid[i]}
-								></div>
-							{/each}
-						</div>
-					</div>
-				{/each}
+				{@render opponents(othersSecondHalf)}
 			</div>
 		</div>
 	</div>
@@ -235,6 +163,60 @@
 		>
 	</div>
 </section>
+
+{#snippet opponents(list: SquabblePlayer[])}
+	{#each list as p, i (i)}
+		{@const hpPct = Math.max(0, p.hp)}
+		<div class="flex flex-col gap-1 ltr" class:dead={p.eliminated}>
+			<div class="flex gap-1">
+				<div class="size-8 border-2 border-border">
+					<img class="size-full" src={p.avatar} alt="{p.name} avatar" />
+				</div>
+				<div class="flex flex-col gap-1 flex-1">
+					<div
+						class="text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis flex gap-2 items-baseline"
+					>
+						{p.name}
+						{#if p.eliminated}<span class="skull">💀</span>{/if}
+					</div>
+					<div
+						class="w-full h-2 bg-surface-2 rounded-full overflow-hidden border-border border relative"
+					>
+						<div
+							class="h-full transition-[width] {hpPct < 30
+								? 'bg-red'
+								: hpPct < 60
+									? 'bg-yellow'
+									: 'bg-green'}"
+							style="width:{hpPct}%"
+						></div>
+					</div>
+				</div>
+			</div>
+
+			<div class="grid grid-cols-5 gap-0.5">
+				{#each Array(6) as _, rowIdx (rowIdx)}
+					{@const guess = p.guesses[rowIdx]}
+					{#each Array(WORD_LEN) as _, colIdx (colIdx)}
+						{@const cellIdx = rowIdx * WORD_LEN + colIdx}
+						{@const result = guess
+							? evaluateGuess(guess, gameState.words[p.wordIndex])[colIdx]
+							: null}
+						{@const garbage = p.miniGrid[cellIdx]}
+						<div
+							class="w-full aspect-square rounded-xs"
+							class:bg-surface-2={!result && !garbage}
+							class:bg-green={result === 'correct' && !garbage}
+							class:bg-yellow={result === 'present' && !garbage}
+							class:bg-gray-tile={result === 'absent' && !garbage}
+							class:bg-surface-3={garbage}
+						></div>
+					{/each}
+				{/each}
+			</div>
+		</div>
+	{/each}
+{/snippet}
 
 <style>
 	.tile {
@@ -330,6 +312,37 @@
 		}
 	}
 
+	/* OPPONENT */
+	.opp-card {
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 8px 10px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		position: relative;
+		transition: border-color 0.2s;
+	}
+
+	.opp-card.hit {
+		border-color: var(--red);
+		animation: hitFlash 0.4s ease;
+	}
+
+	@keyframes hitFlash {
+		0% {
+			background: rgba(229, 72, 77, 0.25);
+		}
+		100% {
+			background: transparent;
+		}
+	}
+
+	.opp-card.dead {
+		opacity: 0.45;
+	}
+
 	/* KEY */
 
 	.key {
@@ -378,5 +391,6 @@
 		background: var(--surface-3);
 		color: var(--ink-faint);
 		border-color: var(--surface-3);
+		opacity: 0.5;
 	}
 </style>
