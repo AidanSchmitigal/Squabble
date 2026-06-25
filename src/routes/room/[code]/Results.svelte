@@ -3,7 +3,7 @@
 	import { evaluateGuess, type GameState } from '$lib/game';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { drawAvatar, hpClass, toastMsg } from './helpers';
+	import { toastMsg } from '$lib';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
@@ -19,8 +19,8 @@
 	let placement = $derived(me?.placement ?? gameState.players.length);
 
 	let sorted = $derived(
-		[...gameState.players].sort(
-			(a, b) => (a.eliminated === b.eliminated ? (a.winner ? -1 : b.winner ? 1 : 0) : a.eliminated ? 1 : -1)
+		[...gameState.players].sort((a, b) =>
+			a.eliminated === b.eliminated ? (a.winner ? -1 : b.winner ? 1 : 0) : a.eliminated ? 1 : -1
 		)
 	);
 
@@ -56,7 +56,7 @@
 			{#if winner}
 				{@const isMe = winner.id === selfId}
 				<div class="winner-avatar">
-					<canvas use:drawAvatar={winner.avatar}></canvas>
+					<img src={winner.avatar} alt="{winner.name} avatar" />
 				</div>
 				<div class="winner-label">👑 {isMe ? 'You won!' : winner.name + ' won!'}</div>
 			{:else}
@@ -87,14 +87,21 @@
 			<div class="card">
 				<span class="section-label">Final Standings</span>
 				<div class="standings-list">
-					{#each sorted as p, i}
+					{#each sorted as p, i (i)}
 						{@const rank = i + 1}
 						<div class="standing-row" class:me={p.id === selfId} class:winner={p.winner}>
-							<span class="rank-badge">{rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span>
+							<span class="rank-badge"
+								>{rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span
+							>
 							<div class="avatar-frame"><canvas use:drawAvatar={p.avatar}></canvas></div>
 							<span class="pname">{p.name} {p.id === selfId ? '(you)' : ''}</span>
 							<div class="hp-wrap-sm">
-								<div class="hp-bar-track-sm"><div class="hp-bar-fill-sm {hpClass(p.hp)}" style="width:{Math.max(0, p.hp)}%"></div></div>
+								<div class="hp-bar-track-sm">
+									<div
+										class="hp-bar-fill-sm {hpClass(p.hp)}"
+										style="width:{Math.max(0, p.hp)}%"
+									></div>
+								</div>
 								<span class="hp-num-sm">{Math.max(0, Math.round(p.hp))}</span>
 							</div>
 							<span class="word-count">📜 {p.wordIndex + 1}</span>
@@ -111,7 +118,7 @@
 							No matches yet &mdash; play your first Squabble!
 						</div>
 					{:else}
-						{#each matchHistory as h}
+						{#each matchHistory as h, i (i)}
 							<div class="history-row">
 								<span>#{h.place} <span style="color:var(--ink-faint)">/ {h.total}</span></span>
 								<span><b>{h.words}</b> words</span>

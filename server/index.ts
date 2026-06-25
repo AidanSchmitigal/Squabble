@@ -8,6 +8,7 @@ import {
 	EMPTY_AVATAR,
 	evaluateGuess,
 	sanitizeName,
+	WORD_LEN,
 	type Avatar,
 	type ClientMessage,
 	type GamePhase,
@@ -181,7 +182,7 @@ class GameRoom {
 		const player = this.players.find((p) => p.id === senderId);
 		if (!player || player.eliminated) return;
 
-		if (guess.length !== 5) return;
+		if (guess.length !== WORD_LEN) return;
 		if (!ALLOWED_5.has(guess)) return;
 
 		const answer = this.words[player.wordIndex % this.words.length];

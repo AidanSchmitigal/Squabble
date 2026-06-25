@@ -103,6 +103,8 @@ export const BOT_NAMES = [
 	'Vex'
 ];
 
+export const WORD_LEN = 5;
+
 export const ANSWERS_5 = ['CRANE'];
 
 export const ALLOWED_5 = new Set([...ANSWERS_5, 'ABOUT']);

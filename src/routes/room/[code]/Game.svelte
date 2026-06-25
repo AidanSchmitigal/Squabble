@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { roomState } from '$lib/room.svelte';
-	import { evaluateGuess, ALLOWED_5, type GameState } from '$lib/game';
-	import { drawAvatar, hpClass } from './helpers';
+	import { evaluateGuess, ALLOWED_5, type GameState, WORD_LEN } from '$lib/game';
+	import { hpClass } from '$lib';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
@@ -17,7 +17,7 @@
 
 	function typeLetter(ch: string) {
 		if (!me || me.eliminated) return;
-		if (currentGuess.length >= gameState.settings.wordLen) return;
+		if (currentGuess.length >= WORD_LEN) return;
 		currentGuess += ch;
 	}
 
@@ -28,7 +28,7 @@
 
 	function submitGuess() {
 		if (!me || me.eliminated) return;
-		if (currentGuess.length < gameState.settings.wordLen) {
+		if (currentGuess.length < WORD_LEN) {
 			shakeRow = me.guesses.length;
 			setTimeout(() => (shakeRow = null), 400);
 			return;
@@ -79,9 +79,9 @@
 		<div class="game-body">
 			<div class="board-col">
 				<div class="board">
-					{#each Array(6) as _, rowIdx}
+					{#each Array(6) as _, rowIdx (rowIdx)}
 						<div class="board-row" class:shake={shakeRow === rowIdx}>
-							{#each Array(gameState.settings.wordLen) as _, colIdx}
+							{#each Array(WORD_LEN) as _, colIdx (colIdx)}
 								{@const guess = me?.guesses[rowIdx]}
 								{@const letter = guess
 									? guess[colIdx]
@@ -106,10 +106,10 @@
 				</div>
 
 				<div class="keyboard">
-					{#each KB_ROWS as row, ri}
+					{#each KB_ROWS as row, ri (ri)}
 						<div class="kb-row">
 							{#if ri === 2}<button class="key wide" onclick={submitGuess}>ENTER</button>{/if}
-							{#each row.split('') as ch}
+							{#each row.split('') as ch, i (i)}
 								{@const st = keyStates[ch]}
 								<button
 									class="key"
@@ -126,10 +126,10 @@
 			</div>
 
 			<div class="opp-col">
-				{#each others as p}
+				{#each others as p (p.id)}
 					{@const hpPct = Math.max(0, p.hp)}
 					<div class="opp-card" class:dead={p.eliminated}>
-						<div class="opp-avatar"><canvas use:drawAvatar={p.avatar}></canvas></div>
+						<div class="opp-avatar"><img src={p.avatar} alt="{p.name} avatar" /></div>
 						<div class="opp-info">
 							<div class="opp-name">
 								{p.name}
@@ -139,7 +139,7 @@
 								<div class="opp-hp-fill {hpClass(hpPct)}" style="width:{hpPct}%"></div>
 							</div>
 							<div class="opp-mini-grid">
-								{#each Array(15) as _, i}
+								{#each Array(15) as _, i (i)}
 									<div class="opp-mini-cell" class:fill={p.miniGrid[i]}></div>
 								{/each}
 							</div>
