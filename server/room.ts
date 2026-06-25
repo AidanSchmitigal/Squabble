@@ -5,6 +5,7 @@ import {
 	evaluateGuess,
 	nextRoomCode,
 	sanitizeName,
+	updateKeyStates,
 	WORD_LEN,
 	type Avatar,
 	type GamePhase,
@@ -13,8 +14,20 @@ import {
 	type ServerMessage,
 	type SquabblePlayer
 } from '../src/lib/game';
-import { ANSWERS } from '../src/lib/assets/answers';
 import { VALID } from '../src/lib/assets/valid';
+import { ANSWERS } from '../src/lib/assets/answers';
+import { createBroadcaster, sendTo } from './broadcast';
+import { createDamageManager } from './damage-tick';
+import {
+	advancePlayerWord,
+	applyDamage,
+	eliminatePlayer,
+	endGame,
+	healPlayer,
+	isHost,
+	randomAliveOpponent,
+	addGarbage
+} from './game-logic';
 
 export class GameRoom {
 	roomCode: string;
@@ -29,7 +42,8 @@ export class GameRoom {
 
 	connections = new Map<string, WebSocket>();
 	private spectatorIds = new Set<string>();
-	private damageTimers = new Map<string, ReturnType<typeof setInterval>>();
+	private broadcaster = createBroadcaster(this.connections);
+	private damageManager = createDamageManager();
 
 	constructor(
 		roomCode: string,
@@ -65,14 +79,14 @@ export class GameRoom {
 		}
 
 		ws.send(JSON.stringify({ type: 'hello', id } satisfies ServerMessage));
-		this.broadcastState();
+		this.broadcaster.broadcastState(() => this.selfState);
 		return id;
 	}
 
 	removeConnection(id: string) {
 		this.connections.delete(id);
 		this.spectatorIds.delete(id);
-		this.stopDamageTick(id);
+		this.damageManager.stop(id);
 
 		if (this.phase === 'lobby') {
 			const idx = this.players.findIndex((p) => p.id === id);
@@ -94,7 +108,7 @@ export class GameRoom {
 			}
 		}
 
-		this.broadcastState();
+		this.broadcaster.broadcastState(() => this.selfState);
 	}
 
 	handleMessage(message: string, senderId: string) {
@@ -105,7 +119,6 @@ export class GameRoom {
 			return;
 		}
 
-		// Spectators can only spectate — reject all game actions
 		if (this.spectatorIds.has(senderId) && parsed.type !== 'join') return;
 
 		switch (parsed.type) {
@@ -122,7 +135,7 @@ export class GameRoom {
 				this.handleSubmitGuess(senderId, parsed.guess);
 				break;
 			case 'update-settings':
-				if (this.isHost(senderId)) {
+				if (isHost(this.players, senderId)) {
 					Object.assign(this.settings, parsed.settings);
 				}
 				break;
@@ -131,24 +144,22 @@ export class GameRoom {
 				return;
 		}
 
-		this.broadcastState();
+		this.broadcaster.broadcastState(() => this.selfState);
 	}
 
 	/* ---------- Handlers ---------- */
 
 	private handleJoin(senderId: string, name?: string, avatar?: Avatar, playerId?: string) {
-		// Reconnect path
 		if (playerId) {
 			const existing = this.players.find((p) => p.id === playerId);
 			if (existing) {
-				// Update player ID to match the new connection key
 				existing.id = senderId;
 				existing.connected = true;
 				if (name) existing.name = sanitizeName(name);
 				if (avatar) existing.avatar = avatar;
 
 				this.spectatorIds.delete(senderId);
-				this.stopDamageTick(playerId);
+				this.damageManager.stop(playerId);
 
 				const ws = this.connections.get(senderId);
 				if (ws) {
@@ -157,15 +168,12 @@ export class GameRoom {
 				return;
 			}
 
-			// Player wasn't found — if the game is still in lobby, the player was removed on
-			// disconnect (no rejoin needed before the game starts). Fall through to fresh join.
 			if (this.phase !== 'lobby') {
 				this.spectatorIds.add(senderId);
 				return;
 			}
 		}
 
-		// New join — only allowed during lobby
 		if (this.phase !== 'lobby') {
 			this.spectatorIds.add(senderId);
 			return;
@@ -182,13 +190,13 @@ export class GameRoom {
 		}
 
 		const finalName = sanitizeName(name || 'Player');
-		const isHost = this.players.length === 0;
+		const isHostFlag = this.players.length === 0;
 
 		this.players.push({
 			id: senderId,
 			name: finalName,
 			avatar: avatar ?? EMPTY_AVATAR,
-			isHost,
+			isHost: isHostFlag,
 			connected: true,
 			hp: 100,
 			eliminated: false,
@@ -212,11 +220,11 @@ export class GameRoom {
 		if (!player) return;
 		if (name) player.name = sanitizeName(name);
 		if (avatar) player.avatar = avatar;
-		this.broadcastState();
+		this.broadcaster.broadcastState(() => this.selfState);
 	}
 
 	private handleStartGame(senderId: string) {
-		if (!this.isHost(senderId)) return;
+		if (!isHost(this.players, senderId)) return;
 		if (this.phase !== 'lobby') return;
 
 		this.phase = 'playing';
@@ -257,17 +265,31 @@ export class GameRoom {
 		const result = evaluateGuess(guess, answer);
 
 		player.guesses.push(guess);
-
-		guess.split('').forEach((ch, i) => {
-			const cur = player.keyStates[ch];
-			const rank: Record<string, number> = { absent: 0, present: 1, correct: 2 };
-			if (!cur || rank[result[i]] > rank[cur]) player.keyStates[ch] = result[i];
-		});
+		updateKeyStates(player.keyStates, guess, result);
 
 		const solved = result.every((r) => r === 'correct');
 
 		if (solved) {
-			this.handleWordSolved(player);
+			player.wordsSolved++;
+			healPlayer(player, 22);
+
+			const target = randomAliveOpponent(this.players, player.id);
+			if (target) {
+				const dmg = 16 + Math.floor(Math.random() * 10);
+				player.damageDealt += dmg;
+				if (applyDamage(target, dmg)) {
+					const count = eliminatePlayer(target, this.players);
+					this.aliveCount = count;
+					this.damageManager.stop(target.id);
+
+					if (this.aliveCount <= 1) {
+						this.endGame();
+					}
+				}
+				addGarbage(target, this.words);
+			}
+
+			advancePlayerWord(player, this.words);
 		} else {
 			let healAmount = 0;
 			for (let i = 0; i < result.length; i++) {
@@ -279,10 +301,10 @@ export class GameRoom {
 					healAmount += 1;
 				}
 			}
-			this.healPlayer(player, healAmount);
+			healPlayer(player, healAmount);
 
 			if (player.guesses.length >= 6) {
-				this.advancePlayerWord(player);
+				advancePlayerWord(player, this.words);
 			}
 		}
 	}
@@ -291,95 +313,31 @@ export class GameRoom {
 		const next = nextRoomCode(this.roomCode);
 		const existing = this.rooms.get(next);
 		const busy = existing && existing.phase !== 'lobby';
-		this.sendTo(senderId, {
+		sendTo(this.connections, senderId, {
 			type: 'suggest-room',
 			roomCode: busy ? null : next
 		});
 	}
 
-	private sendTo(id: string, message: ServerMessage) {
-		const ws = this.connections.get(id);
-		if (ws?.readyState === WebSocket.OPEN) {
-			ws.send(JSON.stringify(message));
-		}
-	}
+	/* ---------- Game flow ---------- */
 
-	/* ---------- Game logic ---------- */
+	private startDamageTick(playerId: string) {
+		const interval = this.settings.dmgTick * 1000;
+		this.damageManager.start(playerId, interval, () => {
+			const player = this.players.find((p) => p.id === playerId);
+			if (!player || player.eliminated || this.phase !== 'playing') return;
 
-	private handleWordSolved(player: SquabblePlayer) {
-		player.wordsSolved++;
-		this.healPlayer(player, 22);
+			if (applyDamage(player, 1)) {
+				const count = eliminatePlayer(player, this.players);
+				this.aliveCount = count;
+				this.damageManager.stop(player.id);
 
-		const target = this.randomAliveOpponent(player.id);
-		if (target) {
-			const dmg = 16 + Math.floor(Math.random() * 10);
-			player.damageDealt += dmg;
-			this.applyDamage(target, dmg);
-			this.addGarbage(target);
-		}
-
-		this.advancePlayerWord(player);
-	}
-
-	private advancePlayerWord(player: SquabblePlayer) {
-		player.wordIndex++;
-		player.guesses = [];
-		player.keyStates = {};
-		player.garbageMask = new Array(6).fill(false);
-		player.healedGreens = new Array(WORD_LEN).fill(false);
-		player.healedYellows = [];
-		if (player.wordIndex >= this.words.length) {
-			let newWord;
-			do {
-				newWord = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
-			} while (this.words.includes(newWord));
-			this.words.push(newWord);
-		}
-	}
-
-	private healPlayer(player: SquabblePlayer, amount: number) {
-		player.hp = Math.min(200, player.hp + amount);
-	}
-
-	private applyDamage(player: SquabblePlayer, amount: number) {
-		player.hp = Math.max(0, player.hp - amount);
-		player.damageTaken += amount;
-		if (player.hp <= 0 && !player.eliminated) {
-			this.eliminatePlayer(player);
-		}
-	}
-
-	private addGarbage(player: SquabblePlayer) {
-		if (player.guesses.length >= 6) return;
-
-		let word;
-		do {
-			word = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
-		} while (this.words.includes(word));
-		const answer = this.words[player.wordIndex % this.words.length];
-		const result = evaluateGuess(word, answer);
-
-		player.guesses.push(word);
-		player.garbageMask[player.guesses.length - 1] = true;
-
-		word.split('').forEach((ch, i) => {
-			const cur = player.keyStates[ch];
-			const rank: Record<string, number> = { absent: 0, present: 1, correct: 2 };
-			if (!cur || rank[result[i]] > rank[cur]) player.keyStates[ch] = result[i];
+				if (this.aliveCount <= 1) {
+					this.endGame();
+				}
+			}
+			this.broadcaster.broadcastState(() => this.selfState);
 		});
-	}
-
-	private eliminatePlayer(player: SquabblePlayer) {
-		player.eliminated = true;
-		player.eliminatedAt = Date.now();
-		const alive = this.players.filter((p) => !p.eliminated);
-		player.placement = alive.length + 1;
-		this.aliveCount = alive.length;
-		this.stopDamageTick(player.id);
-
-		if (this.aliveCount <= 1) {
-			this.endGame();
-		}
 	}
 
 	private checkElimination(playerId: string) {
@@ -397,92 +355,9 @@ export class GameRoom {
 	private endGame() {
 		this.phase = 'finished';
 		this.gameEndedAt = Date.now();
+		this.damageManager.stopAll();
 
-		for (const [id] of this.damageTimers) {
-			this.stopDamageTick(id);
-		}
-
-		const alive = this.players.filter((p) => !p.eliminated);
-		if (alive.length === 1) {
-			const winner = alive[0];
-			winner.placement = 1;
-			this.winnerId = winner.id;
-		}
-
-		const placed = this.players.filter((p) => p.placement !== null).length;
-		const unplaced = this.players.filter((p) => p.placement === null).sort((a, b) => b.hp - a.hp);
-
-		unplaced.forEach((p, i) => {
-			p.placement = placed + i + 1;
-		});
-	}
-
-	/* ---------- Damage tick ---------- */
-
-	private startDamageTick(playerId: string) {
-		this.stopDamageTick(playerId);
-		const interval = this.settings.dmgTick * 1000;
-
-		const timer = setInterval(
-			() => {
-				const player = this.players.find((p) => p.id === playerId);
-				if (!player || player.eliminated || this.phase !== 'playing') return;
-
-				this.applyDamage(player, 1);
-				this.broadcastState();
-			},
-			Math.max(1000, interval)
-		);
-
-		this.damageTimers.set(playerId, timer);
-	}
-
-	private stopDamageTick(playerId: string) {
-		const timer = this.damageTimers.get(playerId);
-		if (timer) {
-			clearInterval(timer);
-			this.damageTimers.delete(playerId);
-		}
-	}
-
-	/* ---------- Helpers ---------- */
-
-	private isHost(id: string) {
-		const player = this.players.find((p) => p.id === id);
-		return player?.isHost ?? false;
-	}
-
-	private randomAliveOpponent(excludeId: string): SquabblePlayer | null {
-		const alive = this.players.filter(
-			(p) => p.id !== excludeId && !p.eliminated && p.guesses.length < 5 // Ignore people with one guess left (so they get a chance to guess)
-		);
-		if (alive.length === 0) return null;
-		return alive[Math.floor(Math.random() * alive.length)];
-	}
-
-	/* ---------- Broadcasting ---------- */
-
-	private broadcastTimer: ReturnType<typeof setTimeout> | null = null;
-	private static readonly BROADCAST_INTERVAL_MS = 80;
-
-	private broadcastState() {
-		if (this.broadcastTimer) return;
-		this.broadcastTimer = setTimeout(() => {
-			this.broadcastTimer = null;
-			this.flushState();
-		}, GameRoom.BROADCAST_INTERVAL_MS);
-	}
-
-	private flushState() {
-		const payload = JSON.stringify({
-			type: 'state',
-			state: this.selfState
-		} satisfies ServerMessage);
-
-		for (const ws of this.connections.values()) {
-			if (ws.readyState !== WebSocket.OPEN) continue;
-			if (ws.bufferedAmount > 10_000) continue;
-			ws.send(payload);
-		}
+		const { winnerId } = endGame(this.players);
+		this.winnerId = winnerId;
 	}
 }
