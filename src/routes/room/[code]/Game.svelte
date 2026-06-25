@@ -13,6 +13,9 @@
 
 	let currentGuess = $state('');
 	let shakeRow: number | null = $state(null);
+	let flippingRow: number | null = $state(null);
+	let flippingCols: Record<number, boolean> = $state({});
+	let revealedCols: Record<number, boolean> = $state({});
 
 	let keyStates = $derived(me.keyStates || {});
 
@@ -43,6 +46,23 @@
 		roomState.optimisticSubmitGuess(guess);
 		roomState.send({ type: 'submit-guess', guess });
 		currentGuess = '';
+		const rowIdx = me.guesses.length - 1;
+		flippingRow = rowIdx;
+		flippingCols = {};
+		revealedCols = {};
+		for (let i = 0; i < WORD_LEN; i++) {
+			setTimeout(() => {
+				flippingCols[i] = true;
+			}, i * 120);
+			setTimeout(() => {
+				revealedCols[i] = true;
+			}, i * 120 + 250);
+		}
+		setTimeout(() => {
+			flippingRow = null;
+			flippingCols = {};
+			revealedCols = {};
+		}, WORD_LEN * 120 + 300);
 	}
 
 	$effect(() => {
@@ -122,12 +142,14 @@
 								{@const result = guess
 									? evaluateGuess(guess, gameState.words[me.wordIndex ?? 0])[colIdx]
 									: null}
+								{@const showResult = !!guess && (rowIdx !== flippingRow || revealedCols[colIdx])}
 								<div
 									class="tile"
 									class:filled={!!letter}
-									class:correct={result === 'correct'}
-									class:present={result === 'present'}
-									class:absent={result === 'absent'}
+									class:correct={showResult && result === 'correct'}
+									class:present={showResult && result === 'present'}
+									class:absent={showResult && result === 'absent'}
+									class:flip={flippingRow === rowIdx && flippingCols[colIdx]}
 									class:garbage={me.garbageMask[rowIdx]}
 								>
 									{letter}

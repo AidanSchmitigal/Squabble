@@ -454,7 +454,7 @@ export class GameRoom {
 
 	private randomAliveOpponent(excludeId: string): SquabblePlayer | null {
 		const alive = this.players.filter(
-			(p) => p.id !== excludeId && !p.eliminated && p.guesses.length < 5
+			(p) => p.id !== excludeId && !p.eliminated && p.guesses.length < 5 // Ignore people with one guess left (so they get a chance to guess)
 		);
 		if (alive.length === 0) return null;
 		return alive[Math.floor(Math.random() * alive.length)];
