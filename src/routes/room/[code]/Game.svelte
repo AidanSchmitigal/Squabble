@@ -5,7 +5,7 @@
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
-	let me = $derived(gameState.players.find((p) => p.id === selfId)!);
+	let me = $derived(gameState.players.find((p) => p.id === selfId)!); // Assuming you can only get this far if you are in the game. Otherwise you should be spectating at a different route / component
 	let others = $derived(gameState.players.filter((p) => p.id !== selfId));
 
 	let currentGuess = $state('');

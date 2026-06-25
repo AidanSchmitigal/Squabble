@@ -35,7 +35,7 @@ export type GameState = {
 };
 
 export type ClientMessage =
-	| { type: 'join'; name: string; avatar: Avatar }
+	| { type: 'join'; name?: string; avatar?: Avatar; playerId?: string }
 	| { type: 'set-player'; name?: string; avatar?: Avatar }
 	| { type: 'start-game' }
 	| { type: 'submit-guess'; guess: string }

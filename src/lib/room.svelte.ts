@@ -1,5 +1,9 @@
 import type { ClientMessage, GameState, ServerMessage } from './game';
 
+function storedPlayerKey(code: string) {
+	return `squabble-player-${code}`;
+}
+
 class RoomState {
 	connected = $state(false);
 	selfId = $state('');
@@ -51,6 +55,11 @@ class RoomState {
 		ws.addEventListener('open', () => {
 			this.connected = true;
 			this.#reconnectAttempt = 0;
+
+			const storedId = localStorage.getItem(storedPlayerKey(this.#code));
+			if (storedId) {
+				ws.send(JSON.stringify({ type: 'join', playerId: storedId } satisfies ClientMessage));
+			}
 		});
 		ws.addEventListener('close', () => {
 			this.connected = false;
@@ -61,7 +70,10 @@ class RoomState {
 		});
 		ws.addEventListener('message', (event) => {
 			const message = JSON.parse(event.data as string) as ServerMessage;
-			if (message.type === 'hello') this.selfId = message.id;
+			if (message.type === 'hello') {
+				this.selfId = message.id;
+				localStorage.setItem(storedPlayerKey(this.#code), message.id);
+			}
 			if (message.type === 'state') this._gameState = message.state;
 		});
 	}

@@ -33,7 +33,8 @@ export class GameRoom {
 	aliveCount = 0;
 	winnerId: string | null = null;
 
-	private connections = new Map<string, WebSocket>();
+	connections = new Map<string, WebSocket>();
+	private spectatorIds = new Set<string>();
 	private damageTimers = new Map<string, ReturnType<typeof setInterval>>();
 
 	constructor(roomCode: string) {
@@ -56,20 +57,27 @@ export class GameRoom {
 		};
 	}
 
-	addConnection(id: string, ws: WebSocket) {
+	addConnection(ws: WebSocket): string {
+		const id = crypto.randomUUID();
 		this.connections.set(id, ws);
+
+		if (this.phase !== 'lobby') {
+			this.spectatorIds.add(id);
+		}
+
 		ws.send(JSON.stringify({ type: 'hello', id } satisfies ServerMessage));
 		this.broadcastState();
+		return id;
 	}
 
 	removeConnection(id: string) {
 		this.connections.delete(id);
+		this.spectatorIds.delete(id);
 		this.stopDamageTick(id);
 
-		const existing = this.players.find((p) => p.id === id);
-		if (existing) {
-			existing.connected = false;
-			this.players = this.players.filter((p) => p.id !== id);
+		const player = this.players.find((p) => p.id === id);
+		if (player) {
+			player.connected = false;
 		}
 
 		if (this.phase === 'playing') {
@@ -87,9 +95,12 @@ export class GameRoom {
 			return;
 		}
 
+		// Spectators can only spectate — reject all game actions
+		if (this.spectatorIds.has(senderId) && parsed.type !== 'join') return;
+
 		switch (parsed.type) {
 			case 'join':
-				this.handleJoin(senderId, parsed.name, parsed.avatar);
+				this.handleJoin(senderId, parsed.name, parsed.avatar, parsed.playerId);
 				break;
 			case 'set-player':
 				this.handleSetPlayer(senderId, parsed.name, parsed.avatar);
@@ -112,8 +123,37 @@ export class GameRoom {
 
 	/* ---------- Handlers ---------- */
 
-	private handleJoin(id: string, name?: string, avatar?: Avatar) {
-		const existing = this.players.find((p) => p.id === id);
+	private handleJoin(senderId: string, name?: string, avatar?: Avatar, playerId?: string) {
+		// Reconnect path
+		if (playerId) {
+			const existing = this.players.find((p) => p.id === playerId);
+			if (!existing) return;
+
+			// Update player ID to match the new connection key
+			existing.id = senderId;
+			existing.connected = true;
+			if (name) existing.name = sanitizeName(name);
+			if (avatar) existing.avatar = avatar;
+
+			this.spectatorIds.delete(senderId);
+			this.stopDamageTick(playerId);
+
+			const ws = this.connections.get(senderId);
+			if (ws) {
+				ws.send(JSON.stringify({ type: 'hello', id: senderId } satisfies ServerMessage));
+			}
+			return;
+		}
+
+		// New join — only allowed during lobby
+		if (this.phase !== 'lobby') {
+			this.spectatorIds.add(senderId);
+			return;
+		}
+
+		this.spectatorIds.delete(senderId);
+
+		const existing = this.players.find((p) => p.id === senderId);
 		if (existing) {
 			if (name) existing.name = sanitizeName(name);
 			if (avatar) existing.avatar = avatar;
@@ -125,7 +165,7 @@ export class GameRoom {
 		const isHost = this.players.length === 0;
 
 		this.players.push({
-			id,
+			id: senderId,
 			name: finalName,
 			avatar: avatar ?? EMPTY_AVATAR,
 			isHost,
@@ -185,7 +225,6 @@ export class GameRoom {
 
 		player.guesses.push(guess);
 
-		// Update key states
 		guess.split('').forEach((ch, i) => {
 			const cur = player.keyStates[ch];
 			const rank: Record<string, number> = { absent: 0, present: 1, correct: 2 };
@@ -210,7 +249,6 @@ export class GameRoom {
 		player.wordsSolved++;
 		this.healPlayer(player, 22);
 
-		// Deal damage + garbage to random alive opponent
 		const target = this.randomAliveOpponent(player.id);
 		if (target) {
 			this.applyDamage(target, 16 + Math.floor(Math.random() * 10));
@@ -225,7 +263,7 @@ export class GameRoom {
 		player.guesses = [];
 		player.keyStates = {};
 		if (player.wordIndex >= this.words.length) {
-			player.wordIndex = 0; // loop
+			player.wordIndex = 0;
 		}
 	}
 
@@ -245,7 +283,6 @@ export class GameRoom {
 		if (empty !== -1) {
 			player.miniGrid[empty] = true;
 		} else {
-			// Full grid: reset
 			player.miniGrid = new Array(15).fill(false);
 		}
 	}
@@ -277,7 +314,6 @@ export class GameRoom {
 	private endGame() {
 		this.phase = 'finished';
 
-		// Stop all damage timers
 		for (const [id] of this.damageTimers) {
 			this.stopDamageTick(id);
 		}
@@ -289,7 +325,6 @@ export class GameRoom {
 			this.winnerId = winner.id;
 		}
 
-		// Assign remaining placements to eliminated players
 		const placed = this.players.filter((p) => p.placement !== null).length;
 		const unplaced = this.players.filter((p) => p.placement === null).sort((a, b) => b.hp - a.hp);
 
@@ -311,7 +346,6 @@ export class GameRoom {
 
 				this.applyDamage(player, 1);
 
-				// Only broadcast if state actually changed
 				if (player.eliminated) {
 					this.broadcastState();
 				}

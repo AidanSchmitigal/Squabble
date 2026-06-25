@@ -3,18 +3,20 @@
 	import Game from './Game.svelte';
 	import Lobby from './Lobby.svelte';
 	import Results from './Results.svelte';
+	import Spectate from './Spectate.svelte';
 
 	let gameState = $derived(roomState.gameState);
 	let phase = $derived(gameState.phase);
 	let selfId = $derived(roomState.selfId);
-
-	// TODO: Check if game is already going and if so, check if this player was already in the game, and if not say "Game already started", and if yes in then reconnect them like nothing happened
+	let isPlayer = $derived(gameState.players.some((p) => p.id === selfId));
 </script>
 
 {#if phase === 'lobby'}
 	<Lobby {gameState} {selfId} />
-{:else if phase === 'playing'}
+{:else if phase === 'playing' && isPlayer}
 	<Game {gameState} {selfId} />
+{:else if phase === 'playing'}
+	<Spectate {gameState} />
 {:else if phase === 'finished'}
 	<Results {gameState} {selfId} />
 {/if}

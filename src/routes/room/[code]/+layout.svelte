@@ -5,6 +5,13 @@
 	let { data, children } = $props();
 	let roomCode = $derived(data.roomCode);
 
+	let status = $derived(
+		!roomState.ready ? `Connecting to ${roomCode}...`
+		: roomState.gameState.phase !== 'lobby' && !roomState.gameState.players.some(p => p.id === roomState.selfId)
+			? `Spectating ${roomCode}`
+			: ''
+	);
+
 	onMount(() => {
 		roomState.connect(roomCode);
 		return () => {
@@ -29,7 +36,7 @@
 
 {#if !roomState.ready}
 	<section class="screen" id="screen-main" style="justify-content:center;text-align:center">
-		<div style="font-family:var(--font-mono);color:var(--ink-dim)">Connecting to {roomCode}...</div>
+		<div style="font-family:var(--font-mono);color:var(--ink-dim)">{status}</div>
 	</section>
 {:else}
 	{@render children()}

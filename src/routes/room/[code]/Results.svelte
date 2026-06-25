@@ -9,18 +9,26 @@
 
 	let me = $derived(gameState.players.find((p) => p.id === selfId));
 
-	let guessHistory = $state<string[][]>([]);
+	let guessHistory = $state<string[]>([]);
 	$effect(() => {
 		if (me) guessHistory = me.guesses.slice();
 	});
 
-	let winner = $derived(gameState.players.find((p) => p.winner));
+	let winner = $derived(gameState.players.find((p) => p.id === gameState.winnerId));
 
 	let placement = $derived(me?.placement ?? gameState.players.length);
 
 	let sorted = $derived(
 		[...gameState.players].sort((a, b) =>
-			a.eliminated === b.eliminated ? (a.winner ? -1 : b.winner ? 1 : 0) : a.eliminated ? 1 : -1
+			a.eliminated === b.eliminated
+				? a.id === gameState.winnerId
+					? -1
+					: b.id === gameState.winnerId
+						? 1
+						: 0
+				: a.eliminated
+					? 1
+					: -1
 		)
 	);
 
@@ -89,7 +97,7 @@
 				<div class="standings-list">
 					{#each sorted as p, i (i)}
 						{@const rank = i + 1}
-						<div class="standing-row" class:me={p.id === selfId} class:winner={p.winner}>
+						<div class="standing-row" class:me={p.id === selfId} class:winner={p.id === gameState.winnerId}>
 							<span class="rank-badge"
 								>{rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span
 							>

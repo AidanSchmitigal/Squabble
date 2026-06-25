@@ -34,20 +34,20 @@ wss.on('connection', (ws, req) => {
 		return;
 	}
 
-	const id = crypto.randomUUID();
 	let room = rooms.get(roomCode);
 	if (!room) {
 		room = new GameRoom(roomCode);
 		rooms.set(roomCode, room);
 	}
 
-	room.addConnection(id, ws);
+	const id = room.addConnection(ws);
 
 	ws.on('message', (data) => {
 		room?.handleMessage(data.toString(), id);
 	});
 
 	ws.on('close', () => {
+		if (room?.connections.get(id) !== ws) return;
 		room?.removeConnection(id);
 		if (room?.isEmpty) {
 			rooms.delete(roomCode);
