@@ -69,6 +69,7 @@ body.reduced-motion * {
 	--radius-sm: 8px;
 	--animate-fadeup: fadeUp 0.6s ease forwards;
 	--tracking-widerest: 0.125em;
+	--shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
 @utility animation-delay-* {
@@ -500,55 +501,6 @@ button {
 	}
 }
 
-/* ---------- Modal ---------- */
-.modal-overlay {
-	position: fixed;
-	inset: 0;
-	background: rgba(8, 8, 10, 0.7);
-	backdrop-filter: blur(3px);
-	z-index: 50;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 20px;
-	animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-	from {
-		opacity: 0;
-	}
-	to {
-		opacity: 1;
-	}
-}
-
-.modal {
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: var(--radius);
-	padding: 24px;
-	max-width: 440px;
-	width: 100%;
-	box-shadow: var(--shadow-pop);
-	animation: popIn 0.25s ease;
-	max-height: 85vh;
-	overflow-y: auto;
-}
-
-.modal-head {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 14px;
-}
-
-.modal-head h2 {
-	font-family: var(--font-display);
-	font-size: 18px;
-	margin: 0;
-}
-
 /* ---------- Game screen ---------- */
 
 /* ---------- Opponents column ---------- */
@@ -667,70 +619,5 @@ button {
 	100% {
 		transform: translateY(105vh) rotate(540deg);
 		opacity: 0.9;
-	}
-}
-
-/* ---------- How to play ---------- */
-.howto-tile-row {
-	display: flex;
-	gap: 6px;
-	margin: 10px 0;
-}
-
-.howto-tile {
-	width: 38px;
-	height: 38px;
-	border-radius: 6px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-family: var(--font-display);
-	font-size: 18px;
-	border: 2px solid var(--border);
-}
-
-.howto-step {
-	gap: 10px;
-	margin-bottom: 12px;
-	font-size: 13px;
-	color: var(--ink-dim);
-}
-
-.howto-step b {
-	color: var(--ink);
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 900px) {
-	.game-body {
-		flex-direction: column;
-	}
-	.opp-col {
-		width: 100%;
-		flex-direction: row;
-		flex-wrap: wrap;
-		max-height: none;
-	}
-	.opp-card {
-		width: calc(50% - 4px);
-	}
-	.tile {
-		width: 46px;
-		height: 46px;
-		font-size: 22px;
-	}
-}
-
-@media (max-width: 480px) {
-	.cta-row {
-		flex-direction: column;
-	}
-	.tile {
-		width: 40px;
-		height: 40px;
-		font-size: 19px;
-	}
-	.key {
-		height: 44px;
 	}
 }

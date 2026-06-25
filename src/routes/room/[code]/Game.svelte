@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { VALID } from '$lib/assets/valid';
-	import { evaluateGuess, type GameState, WORD_LEN, type SquabblePlayer } from '$lib/game';
+	import PlayerCard from '$lib/components/PlayerCard.svelte';
+	import { evaluateGuess, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
@@ -167,55 +168,8 @@
 
 {#snippet opponents(list: SquabblePlayer[])}
 	{#each list as p, i (i)}
-		{@const hpPct = Math.max(0, p.hp)}
-		<div class="flex flex-col gap-1 ltr" class:dead={p.eliminated}>
-			<div class="flex gap-1">
-				<div class="size-8 border-2 border-border">
-					<img class="size-full" src={p.avatar} alt="{p.name} avatar" />
-				</div>
-				<div class="flex flex-col gap-1 flex-1">
-					<div
-						class="text-xs font-bold whitespace-nowrap overflow-hidden text-ellipsis flex gap-2 items-baseline"
-					>
-						{p.name}
-						{#if p.eliminated}<span class="skull">💀</span>{/if}
-					</div>
-					<div
-						class="w-full h-2 bg-surface-2 rounded-full overflow-hidden border-border border relative"
-					>
-						<div
-							class="h-full transition-[width] {hpPct < 30
-								? 'bg-red'
-								: hpPct < 60
-									? 'bg-yellow'
-									: 'bg-green'}"
-							style="width:{hpPct}%"
-						></div>
-					</div>
-				</div>
-			</div>
-
-			<div class="grid grid-cols-5 gap-0.5">
-				{#each Array(6) as _, rowIdx (rowIdx)}
-					{@const guess = p.guesses[rowIdx]}
-					{#each Array(WORD_LEN) as _, colIdx (colIdx)}
-						{@const cellIdx = rowIdx * WORD_LEN + colIdx}
-						{@const result = guess
-							? evaluateGuess(guess, gameState.words[p.wordIndex])[colIdx]
-							: null}
-						{@const garbage = p.miniGrid[cellIdx]}
-						<div
-							class="w-full aspect-square rounded-xs"
-							class:bg-surface-2={!result && !garbage}
-							class:bg-green={result === 'correct' && !garbage}
-							class:bg-yellow={result === 'present' && !garbage}
-							class:bg-gray-tile={result === 'absent' && !garbage}
-							class:bg-surface-3={garbage}
-							class:opacity-30={p.garbageMask[rowIdx]}
-						></div>
-					{/each}
-				{/each}
-			</div>
+		<div class="flex flex-col gap-1 ltr">
+			<PlayerCard player={p} {gameState} />
 		</div>
 	{/each}
 {/snippet}
