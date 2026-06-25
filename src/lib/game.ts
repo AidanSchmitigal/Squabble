@@ -105,10 +105,6 @@ export const BOT_NAMES = [
 
 export const WORD_LEN = 5;
 
-export const ANSWERS_5 = ['CRANE'];
-
-export const ALLOWED_5 = new Set([...ANSWERS_5, 'ABOUT']);
-
 export function evaluateGuess(guess: string, answer: string): TileResult[] {
 	const res: TileResult[] = new Array(guess.length).fill('absent');
 	const aLetters = answer.split('');

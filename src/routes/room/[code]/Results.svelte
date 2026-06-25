@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { roomState } from '$lib/room.svelte';
-	import { evaluateGuess, type GameState } from '$lib/game';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { toastMsg } from '$lib';
+	import { hpClass, toastMsg } from '$lib';
+	import { type GameState } from '$lib/game';
+	import { roomState } from '$lib/room.svelte';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
@@ -93,7 +93,7 @@
 							<span class="rank-badge"
 								>{rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank}</span
 							>
-							<div class="avatar-frame"><canvas use:drawAvatar={p.avatar}></canvas></div>
+							<div class="avatar-frame"><img src={p.avatar} alt="{p.name} avatar" /></div>
 							<span class="pname">{p.name} {p.id === selfId ? '(you)' : ''}</span>
 							<div class="hp-wrap-sm">
 								<div class="hp-bar-track-sm">
