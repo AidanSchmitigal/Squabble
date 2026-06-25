@@ -64,7 +64,7 @@
 				random rival, sending them garbage.
 			</div>
 			<div class="mb-3 text-sm text-ink-dim">
-				❌ A wrong guess costs you extra HP &mdash; guess carefully, but don't stall.
+				🟩🟨 Green &amp; yellow letters <b class="text-ink">heal you</b> (+3 HP per 🟩, +1 per 🟨) &mdash; every guess helps.
 			</div>
 			<div class="mb-3 text-sm text-ink-dim">
 				🏆 Everyone shares the same word list. Last fighter standing wins the Squabble.

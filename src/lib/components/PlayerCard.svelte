@@ -9,7 +9,8 @@
 		gameState: GameState;
 	} = $props();
 
-	let hpPct = $derived(Math.max(0, player.hp));
+	let hpPct = $derived(Math.min(100, Math.max(0, player.hp)));
+	let overhealPct = $derived(player.hp > 100 ? ((player.hp - 100) / 100) * 100 : 0);
 </script>
 
 <div class="flex gap-2 items-center">
@@ -33,6 +34,12 @@
 						: 'bg-green'}"
 				style="width:{hpPct}%"
 			></div>
+			{#if overhealPct > 0}
+				<div
+					class="absolute inset-y-0 right-0 h-full bg-blue transition-[width]"
+					style="width:{overhealPct}%"
+				></div>
+			{/if}
 		</div>
 	</div>
 </div>

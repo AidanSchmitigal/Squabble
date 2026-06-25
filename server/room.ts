@@ -70,13 +70,24 @@ export class GameRoom {
 		this.spectatorIds.delete(id);
 		this.stopDamageTick(id);
 
-		const player = this.players.find((p) => p.id === id);
-		if (player) {
-			player.connected = false;
-		}
+		if (this.phase === 'lobby') {
+			const idx = this.players.findIndex((p) => p.id === id);
+			if (idx !== -1) {
+				const wasHost = this.players[idx].isHost;
+				this.players.splice(idx, 1);
+				if (wasHost && this.players.length > 0) {
+					this.players[0].isHost = true;
+				}
+			}
+		} else {
+			const player = this.players.find((p) => p.id === id);
+			if (player) {
+				player.connected = false;
+			}
 
-		if (this.phase === 'playing') {
-			this.checkElimination(id);
+			if (this.phase === 'playing') {
+				this.checkElimination(id);
+			}
 		}
 
 		this.broadcastState();
@@ -122,22 +133,29 @@ export class GameRoom {
 		// Reconnect path
 		if (playerId) {
 			const existing = this.players.find((p) => p.id === playerId);
-			if (!existing) return;
+			if (existing) {
+				// Update player ID to match the new connection key
+				existing.id = senderId;
+				existing.connected = true;
+				if (name) existing.name = sanitizeName(name);
+				if (avatar) existing.avatar = avatar;
 
-			// Update player ID to match the new connection key
-			existing.id = senderId;
-			existing.connected = true;
-			if (name) existing.name = sanitizeName(name);
-			if (avatar) existing.avatar = avatar;
+				this.spectatorIds.delete(senderId);
+				this.stopDamageTick(playerId);
 
-			this.spectatorIds.delete(senderId);
-			this.stopDamageTick(playerId);
-
-			const ws = this.connections.get(senderId);
-			if (ws) {
-				ws.send(JSON.stringify({ type: 'hello', id: senderId } satisfies ServerMessage));
+				const ws = this.connections.get(senderId);
+				if (ws) {
+					ws.send(JSON.stringify({ type: 'hello', id: senderId } satisfies ServerMessage));
+				}
+				return;
 			}
-			return;
+
+			// Player wasn't found — if the game is still in lobby, the player was removed on
+			// disconnect (no rejoin needed before the game starts). Fall through to fresh join.
+			if (this.phase !== 'lobby') {
+				this.spectatorIds.add(senderId);
+				return;
+			}
 		}
 
 		// New join — only allowed during lobby
@@ -176,7 +194,9 @@ export class GameRoom {
 			guesses: [],
 			keyStates: {},
 			miniGrid: new Array(WORD_LEN * 6).fill(false),
-			garbageMask: new Array(6).fill(false)
+			garbageMask: new Array(6).fill(false),
+			healedGreens: new Array(WORD_LEN).fill(false),
+			healedYellows: []
 		});
 	}
 
@@ -211,6 +231,8 @@ export class GameRoom {
 			p.keyStates = {};
 			p.miniGrid = new Array(WORD_LEN * 6).fill(false);
 			p.garbageMask = new Array(6).fill(false);
+			p.healedGreens = new Array(WORD_LEN).fill(false);
+			p.healedYellows = [];
 			this.startDamageTick(p.id);
 		}
 	}
@@ -239,11 +261,22 @@ export class GameRoom {
 
 		if (solved) {
 			this.handleWordSolved(player);
-		} else if (player.guesses.length >= 6) {
-			this.applyDamage(player, 18);
-			this.advancePlayerWord(player);
 		} else {
-			this.applyDamage(player, 6);
+			let healAmount = 0;
+			for (let i = 0; i < result.length; i++) {
+				if (result[i] === 'correct' && !player.healedGreens[i]) {
+					player.healedGreens[i] = true;
+					healAmount += 3;
+				} else if (result[i] === 'present' && !player.healedYellows.includes(guess[i])) {
+					player.healedYellows.push(guess[i]);
+					healAmount += 1;
+				}
+			}
+			this.healPlayer(player, healAmount);
+
+			if (player.guesses.length >= 6) {
+				this.advancePlayerWord(player);
+			}
 		}
 	}
 
@@ -269,6 +302,8 @@ export class GameRoom {
 		player.guesses = [];
 		player.keyStates = {};
 		player.garbageMask = new Array(6).fill(false);
+		player.healedGreens = new Array(WORD_LEN).fill(false);
+		player.healedYellows = [];
 		if (player.wordIndex >= this.words.length) {
 			let newWord;
 			do {
@@ -279,7 +314,7 @@ export class GameRoom {
 	}
 
 	private healPlayer(player: SquabblePlayer, amount: number) {
-		player.hp = Math.min(100, player.hp + amount);
+		player.hp = Math.min(200, player.hp + amount);
 	}
 
 	private applyDamage(player: SquabblePlayer, amount: number) {

@@ -26,6 +26,8 @@ export type SquabblePlayer = {
 	keyStates: Record<string, TileResult>;
 	miniGrid: boolean[];
 	garbageMask: boolean[];
+	healedGreens: boolean[];
+	healedYellows: string[];
 };
 
 export type GameState = {

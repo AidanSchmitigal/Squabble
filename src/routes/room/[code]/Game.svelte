@@ -57,7 +57,7 @@
 	});
 
 	$effect(() => {
-		if (me.eliminated && !showEliminated) showEliminated = true;
+		if (me.eliminated) showEliminated = true;
 	});
 
 	const healthColor = $derived.by(() => {
@@ -65,6 +65,9 @@
 		if (me.hp <= 60) return 'from-yellow-deep to-yellow';
 		return 'from-green-deep to-green';
 	});
+
+	const barPct = $derived(Math.min(100, Math.max(0, me.hp ?? 100)));
+	const overhealPct = $derived(me.hp > 100 ? ((me.hp - 100) / 100) * 100 : 0);
 </script>
 
 <section class="screen">
@@ -82,8 +85,14 @@
 				>
 					<div
 						class="h-full bg-linear-90 {healthColor} transition-[width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
-						style="width:{Math.max(0, me.hp ?? 100)}%"
+						style="width:{barPct}%"
 					></div>
+					{#if overhealPct > 0}
+						<div
+							class="absolute inset-y-0 right-0 h-full bg-linear-90 from-blue to-blue-deep transition-[width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+							style="width:{overhealPct}%"
+						></div>
+					{/if}
 				</div>
 				<span class="font-mono font-bold text-sm min-w-8 text-right text-ink"
 					>{Math.max(0, Math.round(me.hp ?? 100))}</span

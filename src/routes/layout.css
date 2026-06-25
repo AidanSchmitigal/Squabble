@@ -20,6 +20,8 @@
 	--gray-tile: #4b4b50;
 	--red: #e5484d;
 	--red-deep: #a82a2e;
+	--blue: #5b9cf5;
+	--blue-deep: #3366cc;
 	--font-display: 'Archivo Black', 'Inter', sans-serif;
 	--font-body: 'Inter', system-ui, sans-serif;
 	--font-mono: 'JetBrains Mono', monospace;
@@ -62,6 +64,8 @@ body.reduced-motion * {
 	--color-gray-tile: var(--gray-tile);
 	--color-red: var(--red);
 	--color-red-deep: var(--red-deep);
+	--color-blue: var(--blue);
+	--color-blue-deep: var(--blue-deep);
 	--font-display: 'Archivo Black', 'Inter', sans-serif;
 	--font-body: 'Inter', system-ui, sans-serif;
 	--font-mono: 'JetBrains Mono', monospace;
