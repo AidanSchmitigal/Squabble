@@ -55,6 +55,9 @@ export function makeRoomCode(): string {
 	return code;
 }
 
+export const EMPTY_AVATAR =
+	'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIUlEQVR4AezQMQ0AAADCMIJ/z+CATAC7d9WBWbCPEwrzFAAA//+q4AtiAAAABklEQVQDALXgJ+0xUinGAAAAAElFTkSuQmCC';
+
 export function randomAvatar(size = 10): string[] {
 	const palette = ['#1a1a1a', '#ff0077', '#fff955', '#44c183', '#176de6', '#b752cb'].slice(
 		Math.floor(Math.random() * 3),

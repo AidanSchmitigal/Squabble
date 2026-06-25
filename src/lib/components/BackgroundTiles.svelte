@@ -13,7 +13,7 @@
 </script>
 
 <div class="bgTiles">
-	{#each tiles as tile}
+	{#each tiles as tile (tile)}
 		<div
 			class="falling-tile"
 			style:left={tile.left}

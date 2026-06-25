@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { roomState } from '$lib/room.svelte';
 	import { onMount } from 'svelte';
-	import { page } from '$app/stores';
 
 	let { data, children } = $props();
 	let roomCode = $derived(data.roomCode);
@@ -19,7 +18,7 @@
 </svelte:head>
 
 <div class="fixed top-1 right-1 flex gap-1 select-none">
-	{#each 'SQUABBLE'.split('') as ch}
+	{#each 'SQUABBLE'.split('') as ch, i (i)}
 		<div
 			class="size-5 rounded-[5px] flex items-center justify-center font-display text-xs border border-border bg-surface"
 		>

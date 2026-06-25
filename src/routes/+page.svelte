@@ -14,7 +14,7 @@
 
 	onMount(() => {
 		soundOn = localStorage.getItem('squabble-sound') !== 'false';
-		cbOn = localStorage.getItem('squabble-cb') !== 'false';
+		cbOn = localStorage.getItem('squabble-cb') !== 'false' && localStorage.hasItem('squabble-cb');
 
 		document.body.classList.toggle('cb-mode', cbOn);
 	});

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { randomAvatar } from '$lib/game';
+	import { EMPTY_AVATAR, randomAvatar } from '$lib/game';
 	import { throttle } from '$lib/index';
 	import type { Snippet } from 'svelte';
 
@@ -55,6 +55,8 @@
 			const image = new Image();
 			image.onload = () => context.drawImage(image, 0, 0, CANVAS_WIDTH, CANVAS_WIDTH);
 			image.src = initialDrawing;
+		} else if (initialDrawing === '') {
+			randomizeCanvas();
 		}
 	}
 
@@ -157,7 +159,7 @@
 		const rect = avatarCanvas.getBoundingClientRect();
 		context.fillStyle = '#ffffff';
 		context.fillRect(0, 0, rect.width, rect.height);
-		onupdate('');
+		onupdate(EMPTY_AVATAR);
 	}
 
 	function handleKeydown(event: KeyboardEvent) {
@@ -200,6 +202,7 @@
 				drawPixel(context, x, y, ava[x + y * CANVAS_WIDTH]);
 			}
 		}
+		onupdate(avatarCanvas.toDataURL('image/png'));
 	}
 </script>
 

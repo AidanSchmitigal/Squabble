@@ -5,8 +5,8 @@ import {
 	ALLOWED_5,
 	ANSWERS_5,
 	DEFAULT_SETTINGS,
+	EMPTY_AVATAR,
 	evaluateGuess,
-	randomAvatar,
 	sanitizeName,
 	type Avatar,
 	type ClientMessage,
@@ -125,13 +125,13 @@ class GameRoom {
 			return;
 		}
 
-		const finalName = sanitizeName(name || '');
+		const finalName = sanitizeName(name || 'Player');
 		const isHost = this.players.length === 0;
 
 		this.players.push({
 			id,
 			name: finalName,
-			avatar: avatar ?? '',
+			avatar: avatar ?? EMPTY_AVATAR,
 			isHost,
 			connected: true,
 			hp: 100,

@@ -1,10 +1,8 @@
 <script lang="ts">
 	import { roomState } from '$lib/room.svelte';
-	import { onMount } from 'svelte';
 	import Game from './Game.svelte';
 	import Lobby from './Lobby.svelte';
 	import Results from './Results.svelte';
-	import { randomAvatar, sanitizeName, type Avatar } from '$lib/game';
 
 	let gameState = $derived(roomState.gameState);
 	let phase = $derived(gameState.phase);

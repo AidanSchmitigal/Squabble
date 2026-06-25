@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { roomState } from '$lib/room.svelte';
-	import type { GameState, GameSettings, Avatar } from '$lib/game';
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
-	import { PALETTE, drawAvatar, drawQR } from './helpers';
+	import AvatarEditor from '$lib/components/AvatarEditor.svelte';
+	import { EMPTY_AVATAR, type Avatar, type GameState } from '$lib/game';
+	import { roomState } from '$lib/room.svelte';
+	import QRCode from 'qrcode';
 	import { onMount } from 'svelte';
 	import { SvelteURL } from 'svelte/reactivity';
-	import QRCode from 'qrcode';
-	import AvatarEditor from '$lib/components/AvatarEditor.svelte';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
@@ -15,7 +14,7 @@
 
 	let qrDataUrl: string | null = $state(null);
 	let lobbyName = $state('');
-	let myLobbyAvatar: Avatar = $state('');
+	let myLobbyAvatar: Avatar = $state(EMPTY_AVATAR);
 
 	onMount(() => {
 		if (qrDataUrl) return;
@@ -129,7 +128,7 @@
 				>Players</span
 			>
 			<div class="grid grid-cols-[repeat(auto-fill,minmax(80px,1fr))] gap-3">
-				{#each gameState.players as p}
+				{#each gameState.players as p (p.id)}
 					<div class="flex flex-col gap-1 animate-fadeup items-center p-2">
 						<div class="size-14 border-border border-2 bg-white relative">
 							{#if p.isHost}<div
@@ -147,9 +146,8 @@
 			</div>
 		</div>
 
-		<hr />
-
 		{#if me?.isHost}
+			<hr />
 			<button class="btn btn-primary btn-block w-full max-w-xl" onclick={handleStartGame}
 				>Start Game ▶</button
 			>

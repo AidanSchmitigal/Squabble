@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
 	const word = 'SQUABBLE';
 	const accentCycle = ['var(--gray-tile)', 'var(--yellow)', 'var(--green)'];
 
@@ -12,7 +10,7 @@
 </script>
 
 <div class="flex gap-2" id="heroLogo">
-	{#each word.split('') as ch, i}
+	{#each word.split('') as ch, i (i)}
 		{@const accent = accentCycle[i % accentCycle.length]}
 		<div class="tile-wrap" style="--i:{i};" onpointerenter={() => bump(i)} role="banner">
 			<div

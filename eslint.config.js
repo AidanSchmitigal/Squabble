@@ -36,12 +36,6 @@ export default defineConfig(
 	{
 		// Allow unused variables with underscore prefix, which we use for private class members
 		rules: {
-			'react-refresh/only-export-components': [
-				'error',
-				{
-					allowConstantExport: true
-				}
-			],
 			'@typescript-eslint/no-unused-vars': [
 				'error',
 				{
