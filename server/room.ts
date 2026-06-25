@@ -3,6 +3,7 @@ import {
 	DEFAULT_SETTINGS,
 	EMPTY_AVATAR,
 	evaluateGuess,
+	nextRoomCode,
 	sanitizeName,
 	WORD_LEN,
 	type Avatar,
@@ -30,7 +31,10 @@ export class GameRoom {
 	private spectatorIds = new Set<string>();
 	private damageTimers = new Map<string, ReturnType<typeof setInterval>>();
 
-	constructor(roomCode: string) {
+	constructor(
+		roomCode: string,
+		private rooms: Map<string, GameRoom>
+	) {
 		this.roomCode = roomCode;
 	}
 
@@ -122,6 +126,9 @@ export class GameRoom {
 					Object.assign(this.settings, parsed.settings);
 				}
 				break;
+			case 'play-again':
+				this.handlePlayAgain(senderId);
+				return;
 		}
 
 		this.broadcastState();
@@ -277,6 +284,23 @@ export class GameRoom {
 			if (player.guesses.length >= 6) {
 				this.advancePlayerWord(player);
 			}
+		}
+	}
+
+	private handlePlayAgain(senderId: string) {
+		const next = nextRoomCode(this.roomCode);
+		const existing = this.rooms.get(next);
+		const busy = existing && existing.phase !== 'lobby';
+		this.sendTo(senderId, {
+			type: 'suggest-room',
+			roomCode: busy ? null : next
+		});
+	}
+
+	private sendTo(id: string, message: ServerMessage) {
+		const ws = this.connections.get(id);
+		if (ws?.readyState === WebSocket.OPEN) {
+			ws.send(JSON.stringify(message));
 		}
 	}
 

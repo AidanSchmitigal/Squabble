@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { VALID } from '$lib/assets/valid';
 	import PlayerCard from '$lib/components/PlayerCard.svelte';
+	import DamagePop from '$lib/components/DamagePop.svelte';
 	import { evaluateGuess, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
-
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
 	let me = $derived(gameState.players.find((p) => p.id === selfId)!); // Assuming you can only get this far if you are in the game. Otherwise you should be spectating at a different route / component
@@ -67,13 +67,14 @@
 
 <section class="screen">
 	<div class="w-full mx-auto flex flex-col gap-3">
+		{gameState.words[me.wordIndex]}
 		<div
-			class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 flex-wrap bg-surface border border-border rounded-sm py-3 px-4 overflow-hidden sticky top-7 z-10"
+			class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 flex-wrap bg-surface border border-border rounded-sm py-3 px-4 sticky top-7 z-10"
 		>
 			<div class="font-mono text-xs text-ink-dim flex gap-2 items-center">
 				Word <span class="text-ink font-bold text-sm">{me.wordIndex + 1}</span>
 			</div>
-			<div class="flex items-center gap-2 min-w-3xs">
+			<div class="flex items-center gap-2 min-w-3xs relative">
 				<span class="text-xs font-mono text-ink-dim uppercase min-w-8">HP</span>
 				<div
 					class="flex-1 h-4 bg-surface-2 rounded-sm overflow-hidden border-border border relative"
@@ -92,10 +93,13 @@
 				<span class="font-mono font-bold text-sm min-w-8 text-right text-ink"
 					>{Math.max(0, Math.round(me.hp ?? 100))}</span
 				>
+				<DamagePop hp={me.hp} />
 			</div>
-			<div class="font-mono relative text-xs font-bold text-right text-white">
+			<div class="font-mono text-xs font-bold text-right text-white">
 				<span class="">{gameState.aliveCount} alive</span>
-				<div class="absolute -inset-5 text-xs bg-linear-270 from-yellow-glow to-transparent"></div>
+				<div
+					class="absolute inset-0 left-1/2 rounded-r-sm text-xs bg-linear-270 from-yellow-glow to-transparent"
+				></div>
 			</div>
 		</div>
 
@@ -158,7 +162,6 @@
 			</div>
 		</div>
 	</div>
-
 </section>
 
 {#snippet opponents(list: SquabblePlayer[])}

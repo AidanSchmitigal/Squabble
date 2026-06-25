@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { roomState } from '$lib/room.svelte';
-	import { onMount } from 'svelte';
 
 	let { data, children } = $props();
 	let roomCode = $derived(data.roomCode);
@@ -12,8 +11,9 @@
 			: ''
 	);
 
-	onMount(() => {
-		roomState.connect(roomCode);
+	$effect(() => {
+		const code = roomCode;
+		roomState.connect(code);
 		return () => {
 			roomState.disconnect();
 		};

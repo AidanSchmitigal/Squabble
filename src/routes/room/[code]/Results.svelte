@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { resolve } from '$app/paths';
 	import { toastMsg } from '$lib';
 	import { type GameState } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
@@ -39,8 +37,7 @@
 	);
 
 	function playAgain() {
-		roomState.disconnect();
-		goto(resolve('/'));
+		roomState.send({ type: 'play-again' });
 	}
 	function shareResult() {
 		const txt = `I placed #${placement} in Squabble!`;

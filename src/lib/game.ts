@@ -47,12 +47,14 @@ export type ClientMessage =
 	| { type: 'set-player'; name?: string; avatar?: Avatar }
 	| { type: 'start-game' }
 	| { type: 'submit-guess'; guess: string }
-	| { type: 'update-settings'; settings: Partial<GameSettings> };
+	| { type: 'update-settings'; settings: Partial<GameSettings> }
+	| { type: 'play-again' };
 
 export type ServerMessage =
 	| { type: 'hello'; id: string }
 	| { type: 'state'; state: GameState }
-	| { type: 'error'; message: string };
+	| { type: 'error'; message: string }
+	| { type: 'suggest-room'; roomCode: string | null };
 
 export function makeRoomCode(): string {
 	const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
@@ -137,3 +139,17 @@ export function evaluateGuess(guess: string, answer: string): TileResult[] {
 export const DEFAULT_SETTINGS: GameSettings = {
 	dmgTick: 1
 };
+
+export function nextRoomCode(code: string): string {
+	const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+	const chars = code.split('');
+	for (let i = chars.length - 1; i >= 0; i--) {
+		const idx = alphabet.indexOf(chars[i]);
+		if (idx < alphabet.length - 1) {
+			chars[i] = alphabet[idx + 1];
+			return chars.join('');
+		}
+		chars[i] = alphabet[0];
+	}
+	return alphabet[0].repeat(code.length);
+}

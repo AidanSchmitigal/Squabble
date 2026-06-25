@@ -1,3 +1,4 @@
+import { goto } from '$app/navigation';
 import {
 	evaluateGuess,
 	WORD_LEN,
@@ -81,6 +82,13 @@ class RoomState {
 				localStorage.setItem(storedPlayerKey(this.#code), message.id);
 			}
 			if (message.type === 'state') this._gameState = message.state;
+			if (message.type === 'suggest-room') {
+				if (message.roomCode) {
+					goto(`/room/${message.roomCode}`);
+				} else {
+					goto('/');
+				}
+			}
 		});
 	}
 

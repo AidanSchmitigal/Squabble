@@ -36,7 +36,7 @@ wss.on('connection', (ws, req) => {
 
 	let room = rooms.get(roomCode);
 	if (!room) {
-		room = new GameRoom(roomCode);
+		room = new GameRoom(roomCode, rooms);
 		rooms.set(roomCode, room);
 	}
 
