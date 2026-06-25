@@ -15,15 +15,6 @@ import {
 import { ANSWERS } from '../src/lib/assets/answers';
 import { VALID } from '../src/lib/assets/valid';
 
-function shuffleArray<T>(arr: T[]): T[] {
-	const a = arr.slice();
-	for (let i = a.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[a[i], a[j]] = [a[j], a[i]];
-	}
-	return a;
-}
-
 export class GameRoom {
 	roomCode: string;
 	phase: GamePhase = 'lobby';
@@ -194,7 +185,7 @@ export class GameRoom {
 		if (this.phase !== 'lobby') return;
 
 		this.phase = 'playing';
-		this.words = shuffleArray(ANSWERS).slice(0, 20);
+		this.words = [ANSWERS[Math.floor(Math.random() * ANSWERS.length)]];
 		this.aliveCount = this.players.length;
 		this.winnerId = null;
 
@@ -263,7 +254,11 @@ export class GameRoom {
 		player.guesses = [];
 		player.keyStates = {};
 		if (player.wordIndex >= this.words.length) {
-			player.wordIndex = 0;
+			let newWord;
+			do {
+				newWord = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+			} while (this.words.includes(newWord));
+			this.words.push(newWord);
 		}
 	}
 
@@ -279,12 +274,9 @@ export class GameRoom {
 	}
 
 	private addGarbage(player: SquabblePlayer) {
-		const empty = player.miniGrid.findIndex((cell) => !cell);
-		if (empty !== -1) {
-			player.miniGrid[empty] = true;
-		} else {
-			player.miniGrid = new Array(WORD_LEN * 6).fill(false);
-		}
+		if (player.guesses.length >= 5) return;
+		const randomWord = ANSWERS[Math.floor(Math.random() * ANSWERS.length)];
+		this.handleSubmitGuess(player.id, randomWord);
 	}
 
 	private eliminatePlayer(player: SquabblePlayer) {

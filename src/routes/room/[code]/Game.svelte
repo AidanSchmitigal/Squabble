@@ -312,37 +312,6 @@
 		}
 	}
 
-	/* OPPONENT */
-	.opp-card {
-		background: var(--surface);
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 8px 10px;
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		position: relative;
-		transition: border-color 0.2s;
-	}
-
-	.opp-card.hit {
-		border-color: var(--red);
-		animation: hitFlash 0.4s ease;
-	}
-
-	@keyframes hitFlash {
-		0% {
-			background: rgba(229, 72, 77, 0.25);
-		}
-		100% {
-			background: transparent;
-		}
-	}
-
-	.opp-card.dead {
-		opacity: 0.45;
-	}
-
 	/* KEY */
 
 	.key {
