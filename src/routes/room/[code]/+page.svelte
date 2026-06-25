@@ -8,15 +8,17 @@
 	let gameState = $derived(roomState.gameState);
 	let phase = $derived(gameState.phase);
 	let selfId = $derived(roomState.selfId);
-	let isPlayer = $derived(gameState.players.some((p) => p.id === selfId));
+	let isAlivePlayer = $derived(
+		!!gameState.players.find((p) => p.id === selfId && !p.eliminated)
+	);
 </script>
 
 {#if phase === 'lobby'}
 	<Lobby {gameState} {selfId} />
-{:else if phase === 'playing' && isPlayer}
+{:else if phase === 'playing' && isAlivePlayer}
 	<Game {gameState} {selfId} />
 {:else if phase === 'playing'}
-	<Spectate {gameState} />
+	<Spectate {gameState} {selfId} />
 {:else if phase === 'finished'}
 	<Results {gameState} {selfId} />
 {/if}

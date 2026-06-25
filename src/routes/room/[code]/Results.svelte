@@ -93,6 +93,24 @@
 
 		<hr />
 
+		<div class="w-full">
+			<span class="font-mono pl-1 text-xs tracking-widerest uppercase text-ink-faint block mb-2"
+				>Words</span
+			>
+			<div class="flex flex-wrap gap-2">
+				{#each gameState.words as word, i (word)}
+					<div
+						class="font-mono text-sm font-bold bg-surface border border-border rounded-sm px-3 py-1.5"
+					>
+						<span class="text-ink-faint">{i + 1}.</span>
+						{word.toUpperCase()}
+					</div>
+				{/each}
+			</div>
+		</div>
+
+		<hr />
+
 		<div class="flex flex-col gap-3 items-center w-full">
 			<div class="w-full">
 				<span class="font-mono pl-1 text-xs tracking-widerest uppercase text-ink-faint block mb-2"

@@ -13,7 +13,6 @@
 
 	let currentGuess = $state('');
 	let shakeRow: number | null = $state(null);
-	let showEliminated = $state(false);
 
 	let keyStates = $derived(me.keyStates || {});
 
@@ -54,10 +53,6 @@
 		}
 		window.addEventListener('keydown', handler);
 		return () => window.removeEventListener('keydown', handler);
-	});
-
-	$effect(() => {
-		if (me.eliminated) showEliminated = true;
 	});
 
 	const healthColor = $derived.by(() => {
@@ -164,15 +159,6 @@
 		</div>
 	</div>
 
-	<div class="eliminated-banner" class:show={showEliminated}>
-		<div style="font-family:var(--font-display);font-size:38px;color:var(--red)">💀 ELIMINATED</div>
-		<div style="color:var(--ink-dim);font-family:var(--font-mono)">
-			Placed #{gameState.players.length - gameState.aliveCount + 1}/{gameState.players.length}
-		</div>
-		<button class="btn btn-ghost" onclick={() => (showEliminated = false)}
-			>Spectate the rest →</button
-		>
-	</div>
 </section>
 
 {#snippet opponents(list: SquabblePlayer[])}
