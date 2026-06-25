@@ -11,5 +11,5 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build:all
 
-EXPOSE 7766
+EXPOSE 7080
 CMD ["pnpm", "start:all"]
