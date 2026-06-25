@@ -144,6 +144,14 @@
 						</div>
 					</div>
 				{/each}
+				<div class="flex flex-col gap-1 animate-fadeup items-center p-4">
+					<div class="size-10 border-border border-2 border-dashed bg-surface/50 relative"></div>
+					<div
+						class="text-sm font-bold overflow-hidden text-ellipsis whitespace-nowrap max-w-32 text-ink-faint"
+					>
+						...
+					</div>
+				</div>
 			</div>
 		</div>
 
