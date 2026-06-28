@@ -45,12 +45,4 @@ export function hpClass(hp: number) {
 	return '';
 }
 
-export function toastMsg(msg: string) {
-	const wrap = document.getElementById('toastWrap');
-	if (!wrap) return;
-	const el = document.createElement('div');
-	el.className = 'toast';
-	el.textContent = msg;
-	wrap.appendChild(el);
-	setTimeout(() => el.remove(), 2800);
-}
+export { toastMsg } from './toast.svelte';

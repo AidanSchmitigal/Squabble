@@ -1,12 +1,19 @@
 <script lang="ts">
 	import BackgroundTiles from '$lib/components/BackgroundTiles.svelte';
+	import { getToasts } from '$lib/toast.svelte';
 	import './layout.css';
 
 	let { children } = $props();
+
+	let toasts = $derived(getToasts());
 </script>
 
 <BackgroundTiles />
-<div id="toastWrap"></div>
+<div id="toastWrap">
+	{#each toasts as toast (toast.id)}
+		<div class="toast">{toast.msg}</div>
+	{/each}
+</div>
 <div id="app">
 	{@render children()}
 </div>
