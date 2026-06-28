@@ -5,6 +5,7 @@
 	import { EMPTY_AVATAR, sanitizeName, type Avatar, type GameState } from '$lib/game';
 	import { getAvatar, getName, setAvatar, setName } from '$lib/storage';
 	import { roomState } from '$lib/room.svelte';
+	import { clickFeedback } from '$lib/feedback.svelte';
 	import QRCode from 'qrcode';
 	import { onMount } from 'svelte';
 	import { SvelteURL } from 'svelte/reactivity';
@@ -61,7 +62,7 @@
 </script>
 
 <section class="screen">
-	<button class="absolute top-2 left-3 text-xs font-mono text-ink-dim" onclick={leaveLobby}
+	<button class="absolute top-2 left-3 text-xs font-mono text-ink-dim" onclick={leaveLobby} use:clickFeedback
 		>← <span class="underline">Leave lobby</span></button
 	>
 
@@ -76,6 +77,7 @@
 						class="font-mono text-8xl font-bold tracking-widerest bg-surface-2 border-2 border-border rounded-sm py-2 px-5 text-yellow cursor-pointer transition-[border,transform] duration-700 hover:border-yellow rotate-x-360 active:rotate-x-0 active:duration-0"
 						onclick={copyCode}
 						tabindex="0"
+						use:clickFeedback
 					>
 						<span class="drop-shadow-yellow-deep drop-shadow-[0_5px_0px_rgb(0_0_0/0.15)]"
 							>{gameState.roomCode}</span
@@ -158,7 +160,7 @@
 
 		{#if me?.isHost}
 			<hr />
-			<button class="btn btn-primary btn-block w-full max-w-xl" onclick={handleStartGame}
+			<button class="btn btn-primary btn-block w-full max-w-xl" onclick={handleStartGame} use:clickFeedback
 				>Start Game ▶</button
 			>
 		{/if}

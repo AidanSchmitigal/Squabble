@@ -1,12 +1,21 @@
 <script lang="ts">
 	import PlayerCard from '$lib/components/PlayerCard.svelte';
 	import { type GameState } from '$lib/game';
+	import { play } from '$lib/feedback.svelte';
+	import { onMount } from 'svelte';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
 	let me = $derived(gameState.players.find((p) => p.id === selfId));
 	let isEliminated = $derived(!!me?.eliminated);
 	let placement = $derived(me ? gameState.players.length - gameState.aliveCount + 1 : null);
+
+	onMount(() => {
+		if (isEliminated) {
+			play('eliminate');
+			navigator.vibrate?.(30);
+		}
+	});
 </script>
 
 <section class="screen">

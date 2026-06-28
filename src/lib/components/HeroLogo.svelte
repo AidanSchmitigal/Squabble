@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { play } from '$lib/feedback.svelte';
+
 	const word = 'SQUABBLE';
 	const accentCycle = ['var(--gray-tile)', 'var(--yellow)', 'var(--green)'];
 
@@ -6,6 +8,8 @@
 
 	function bump(i: number) {
 		spins[i] += 1;
+		play('key');
+		navigator.vibrate?.(4);
 	}
 </script>
 

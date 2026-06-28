@@ -3,6 +3,8 @@
 	import Confetti from '$lib/components/Confetti.svelte';
 	import { type GameState } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
+	import { clickFeedback, play } from '$lib/feedback.svelte';
+	import { onMount } from 'svelte';
 
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
@@ -36,6 +38,17 @@
 					: -1
 		)
 	);
+
+	onMount(() => {
+		const isWinner = me?.id === gameState.winnerId;
+		if (isWinner) {
+			play('victory');
+			navigator.vibrate?.(50);
+		} else {
+			play('eliminate');
+			navigator.vibrate?.(30);
+		}
+	});
 
 	function playAgain() {
 		roomState.send({ type: 'play-again' });
@@ -140,8 +153,8 @@
 		<hr />
 
 		<div class="flex gap-2">
-			<button class="btn btn-primary" onclick={playAgain}>↻ Play Again</button>
-			<button class="btn btn-yellow" onclick={shareResult}>📋 Copy result</button>
+			<button class="btn btn-primary" onclick={playAgain} use:clickFeedback>↻ Play Again</button>
+			<button class="btn btn-yellow" onclick={shareResult} use:clickFeedback>📋 Copy result</button>
 		</div>
 	</div>
 </section>

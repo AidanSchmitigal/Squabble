@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { AVATAR_PALETTE, EMPTY_AVATAR, randomAvatar } from '$lib/game';
 	import { throttle } from '$lib/index';
+	import { clickFeedback, play } from '$lib/feedback.svelte';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -20,6 +21,7 @@
 
 	const throttledStrokeTick = throttle(() => {
 		navigator.vibrate?.(6);
+		play('key');
 	}, 120);
 
 	let avatarCanvas = $state<HTMLCanvasElement>();
@@ -228,6 +230,7 @@
 						style={`background: ${color}`}
 						aria-label="Brush {color}"
 						onclick={() => (brushColor = color)}
+						use:clickFeedback
 					></button>
 				{/each}
 			</div>
@@ -236,17 +239,20 @@
 					class="btn btn-sm btn-ghost disabled:opacity-50 text-3xl"
 					onclick={undo}
 					disabled={undoStack.length === 0}
-					title="undo">↺</button
+					title="undo"
+					use:clickFeedback>↺</button
 				>
 				<button
 					class="btn btn-sm btn-ghost disabled:opacity-50 text-3xl"
 					onclick={clearCanvas}
-					title="clear">⌫</button
+					title="clear"
+					use:clickFeedback>⌫</button
 				>
 				<button
 					class="btn btn-sm btn-ghost disabled:opacity-50 text-3xl"
 					onclick={randomizeCanvas}
-					title="clear">🎲</button
+					title="clear"
+					use:clickFeedback>🎲</button
 				>
 			</div>
 		</div>

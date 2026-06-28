@@ -5,6 +5,7 @@
 	import HowToPlay from '$lib/components/HowToPlay.svelte';
 	import { makeRoomCode } from '$lib/game';
 	import { getSound, getColorblind, setSound, setColorblind } from '$lib/storage';
+	import { clickFeedback } from '$lib/feedback.svelte';
 	import { onMount } from 'svelte';
 
 	let roomInput = $state('');
@@ -70,20 +71,26 @@
 			<button
 				class="flex items-center gap-2 bg-surface-2 border border-border rounded-full px-3 py-2 text-ink-dim font-bold text-xs"
 				onclick={toggleSound}
+				use:clickFeedback
 			>
 				<span class="switch" class:on={soundOn}></span> Sound
 			</button>
 			<button
 				class="flex items-center gap-2 bg-surface-2 border border-border rounded-full px-3 py-2 text-ink-dim font-bold text-xs"
 				onclick={toggleCB}
+				use:clickFeedback
 			>
 				<span class="switch" class:on={cbOn}></span> Colorblind palette
 			</button>
 		</div>
 
 		<div class="w-full">
-			<div class="flex gap-3 w-full">
-				<button class="flex-1 flex-col gap-1 rounded btn btn-primary" onclick={createRoom}>
+			<div class="flex gap-3 w-full justify-center">
+				<button
+					class="flex-1 flex-col gap-1 rounded btn btn-primary"
+					onclick={createRoom}
+					use:clickFeedback
+				>
 					<span class="text-base">Create Game</span>
 					<span class="text-xs font-medium opacity-75 uppercase tracking-wider"
 						>Host a new lobby</span
@@ -94,6 +101,7 @@
 					onclick={() => {
 						showJoin = !showJoin;
 					}}
+					use:clickFeedback
 				>
 					<span class="text-base">Join with Code</span>
 					<span class="text-xs font-medium opacity-75 uppercase tracking-wider"
@@ -115,7 +123,7 @@
 						bind:value={roomInput}
 						onkeydown={(e) => e.key === 'Enter' && joinRoom()}
 					/>
-					<button class="btn btn-yellow mb-1.5" onclick={joinRoom}>Join</button>
+					<button class="btn btn-yellow mb-1.5" onclick={joinRoom} use:clickFeedback>Join</button>
 				</div>{/if}
 		</div>
 

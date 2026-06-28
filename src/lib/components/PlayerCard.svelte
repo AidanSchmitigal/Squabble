@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { evaluateGuess, getHpColorClass, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
+	import { play } from '$lib/feedback.svelte';
 
 	let {
 		player,
@@ -19,11 +20,15 @@
 		const hp = player.hp;
 		if (prevHp !== undefined) {
 			const delta = hp - prevHp;
-			if (delta < -1) {
+			if (delta < -5) {
 				hit = true;
+				play('damage');
+				navigator.vibrate?.(15);
 				setTimeout(() => hit = false, 400);
-			} else if (delta > 0) {
+			} else if (delta > 5) {
 				heal = true;
+				play('heal');
+				navigator.vibrate?.(10);
 				setTimeout(() => heal = false, 400);
 			}
 		}

@@ -1,8 +1,9 @@
 <script lang="ts">
+	import { clickFeedback } from '$lib/feedback.svelte';
 	let show = $state(false);
 </script>
 
-<button class="btn btn-ghost btn-block" onclick={() => (show = true)}>📖 How to play</button>
+<button class="btn btn-ghost btn-block" onclick={() => (show = true)} use:clickFeedback>📖 How to play</button>
 
 {#if show}
 	<div
@@ -13,7 +14,7 @@
 		>
 			<div class="flex justify-between items-start mb-4">
 				<h2 class="font-display text-lg m-0">How to play</h2>
-				<button class="icon-btn" onclick={() => (show = false)}>✕</button>
+				<button class="icon-btn" onclick={() => (show = false)} use:clickFeedback>✕</button>
 			</div>
 			<div class="flex gap-2 my-3">
 				<div
@@ -70,7 +71,7 @@
 			<div class="mb-3 text-sm text-ink-dim">
 				🏆 Everyone shares the same word list. Last fighter standing wins the Squabble.
 			</div>
-			<button class="btn btn-primary btn-block" onclick={() => (show = false)}>Got it</button>
+			<button class="btn btn-primary btn-block" onclick={() => (show = false)} use:clickFeedback>Got it</button>
 		</div>
 	</div>
 {/if}

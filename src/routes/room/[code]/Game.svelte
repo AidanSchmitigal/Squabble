@@ -4,6 +4,7 @@
 	import DamagePop from '$lib/components/DamagePop.svelte';
 	import { evaluateGuess, getHpColorClass, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
+	import { clickFeedback, play } from '$lib/feedback.svelte';
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
 
 	let me = $derived(gameState.players.find((p) => p.id === selfId)!); // Assuming you can only get this far if you are in the game. Otherwise you should be spectating at a different route / component
@@ -23,26 +24,36 @@
 		if (me.eliminated) return;
 		if (currentGuess.length >= WORD_LEN) return;
 		currentGuess += ch;
+		play('key');
+		navigator.vibrate?.(6);
 	}
 
 	function backspace() {
 		if (me.eliminated) return;
 		currentGuess = currentGuess.slice(0, -1);
+		play('key');
+		navigator.vibrate?.(6);
 	}
 
 	function submitGuess() {
 		if (me.eliminated) return;
 		if (currentGuess.length != WORD_LEN) {
 			shakeRow = me.guesses.length;
+			play('wrong');
+			navigator.vibrate?.(15);
 			setTimeout(() => (shakeRow = null), 400);
 			return;
 		}
 		if (!VALID.has(currentGuess.toLowerCase())) {
 			shakeRow = me.guesses.length;
+			play('wrong');
+			navigator.vibrate?.(15);
 			setTimeout(() => (shakeRow = null), 400);
 			return;
 		}
 		const guess = currentGuess.toLowerCase();
+		const result = evaluateGuess(guess, gameState.words[me.wordIndex]);
+		const allCorrect = result.every((r) => r === 'correct');
 		roomState.optimisticSubmitGuess(guess);
 		roomState.send({ type: 'submit-guess', guess });
 		currentGuess = '';
@@ -53,9 +64,12 @@
 		for (let i = 0; i < WORD_LEN; i++) {
 			setTimeout(() => {
 				flippingCols[i] = true;
+				play('swoosh');
 			}, i * 120);
 			setTimeout(() => {
 				revealedCols[i] = true;
+				const r = result[i];
+				play(r === 'correct' ? 'correct' : r === 'present' ? 'present' : 'absent');
 			}, i * 120 + 250);
 		}
 		setTimeout(() => {
@@ -63,7 +77,39 @@
 			flippingCols = {};
 			revealedCols = {};
 		}, WORD_LEN * 120 + 300);
+		if (allCorrect) {
+			setTimeout(() => {
+				play('solve');
+				navigator.vibrate?.(30);
+			}, WORD_LEN * 120 + 300);
+		}
 	}
+
+	let prevHp: number | undefined;
+	$effect(() => {
+		const hp = me.hp;
+		if (prevHp !== undefined && hp !== prevHp) {
+			const delta = hp - prevHp;
+			if (delta < -5) {
+				play('damage');
+				navigator.vibrate?.(20);
+			} else if (delta > 5) {
+				play('heal');
+				navigator.vibrate?.(12);
+			}
+		}
+		prevHp = hp;
+	});
+
+	let prevGarbageCount = 0;
+	$effect(() => {
+		const count = me.garbageMask?.filter(Boolean).length ?? 0;
+		if (count > prevGarbageCount) {
+			play('garbage');
+			navigator.vibrate?.(10);
+		}
+		prevGarbageCount = count;
+	});
 
 	$effect(() => {
 		function handler(e: KeyboardEvent) {
@@ -163,7 +209,7 @@
 				<div class="flex flex-col gap-1.5 w-full">
 					{#each ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'] as row, ri (ri)}
 						<div class="flex gap-1.5 justify-center">
-							{#if ri === 2}<button class="key wide" onclick={submitGuess}>ENTER</button>{/if}
+							{#if ri === 2}<button class="key wide" onclick={submitGuess} use:clickFeedback>ENTER</button>{/if}
 							{#each row.split('') as ch, i (i)}
 								{@const st = keyStates[ch.toLowerCase()]}
 								<button
@@ -174,7 +220,7 @@
 									onclick={() => typeLetter(ch)}>{ch}</button
 								>
 							{/each}
-							{#if ri === 2}<button class="key wide" onclick={backspace}>⌫</button>{/if}
+							{#if ri === 2}<button class="key wide" onclick={backspace} use:clickFeedback>⌫</button>{/if}
 						</div>
 					{/each}
 				</div>
