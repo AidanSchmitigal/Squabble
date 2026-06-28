@@ -2,7 +2,13 @@
 	import { VALID } from '$lib/assets/valid';
 	import PlayerCard from '$lib/components/PlayerCard.svelte';
 	import DamagePop from '$lib/components/DamagePop.svelte';
-	import { evaluateGuess, getHpColorClass, WORD_LEN, type GameState, type SquabblePlayer } from '$lib/game';
+	import {
+		evaluateGuess,
+		getHpColorClass,
+		WORD_LEN,
+		type GameState,
+		type SquabblePlayer
+	} from '$lib/game';
 	import { roomState } from '$lib/room.svelte';
 	import { clickFeedback, play } from '$lib/feedback.svelte';
 	let { gameState, selfId }: { gameState: GameState; selfId: string } = $props();
@@ -66,22 +72,31 @@
 				flippingCols[i] = true;
 				play('swoosh');
 			}, i * 120);
-			setTimeout(() => {
-				revealedCols[i] = true;
-				const r = result[i];
-				play(r === 'correct' ? 'correct' : r === 'present' ? 'present' : 'absent');
-			}, i * 120 + 250);
+			setTimeout(
+				() => {
+					revealedCols[i] = true;
+					const r = result[i];
+					play(r === 'correct' ? 'correct' : r === 'present' ? 'present' : 'absent');
+				},
+				i * 120 + 250
+			);
 		}
-		setTimeout(() => {
-			flippingRow = null;
-			flippingCols = {};
-			revealedCols = {};
-		}, WORD_LEN * 120 + 300);
+		setTimeout(
+			() => {
+				flippingRow = null;
+				flippingCols = {};
+				revealedCols = {};
+			},
+			WORD_LEN * 120 + 300
+		);
 		if (allCorrect) {
-			setTimeout(() => {
-				play('solve');
-				navigator.vibrate?.(30);
-			}, WORD_LEN * 120 + 300);
+			setTimeout(
+				() => {
+					play('solve');
+					navigator.vibrate?.(30);
+				},
+				WORD_LEN * 120 + 300
+			);
 		}
 	}
 
@@ -134,7 +149,6 @@
 
 <section class="screen">
 	<div class="w-full mx-auto flex flex-col gap-3">
-		{gameState.words[me.wordIndex]}
 		<div
 			class="grid grid-cols-[1fr_auto_1fr] items-center gap-4 flex-wrap bg-surface border border-border rounded-sm py-3 px-4 sticky top-7 z-10"
 		>
@@ -209,7 +223,9 @@
 				<div class="flex flex-col gap-1.5 w-full">
 					{#each ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'] as row, ri (ri)}
 						<div class="flex gap-1.5 justify-center">
-							{#if ri === 2}<button class="key wide" onclick={submitGuess} use:clickFeedback>ENTER</button>{/if}
+							{#if ri === 2}<button class="key wide" onclick={submitGuess} use:clickFeedback
+									>ENTER</button
+								>{/if}
 							{#each row.split('') as ch, i (i)}
 								{@const st = keyStates[ch.toLowerCase()]}
 								<button
@@ -220,7 +236,8 @@
 									onclick={() => typeLetter(ch)}>{ch}</button
 								>
 							{/each}
-							{#if ri === 2}<button class="key wide" onclick={backspace} use:clickFeedback>⌫</button>{/if}
+							{#if ri === 2}<button class="key wide" onclick={backspace} use:clickFeedback>⌫</button
+								>{/if}
 						</div>
 					{/each}
 				</div>
