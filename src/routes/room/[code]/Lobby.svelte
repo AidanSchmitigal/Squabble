@@ -40,12 +40,6 @@
 		roomState.send({ type: 'join', name: lobbyName, avatar: myLobbyAvatar });
 	});
 
-	$effect(() => {
-		if (me) {
-			lobbyName = me.name;
-			if (!myLobbyAvatar) myLobbyAvatar = me.avatar.slice();
-		}
-	});
 
 	function handleStartGame() {
 		roomState.send({ type: 'start-game' });
